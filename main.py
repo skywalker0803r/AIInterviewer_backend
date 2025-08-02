@@ -29,7 +29,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 允許前端跨域請求
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 或具體設為 ["http://127.0.0.1:5500"]（如果你用 VSCode Live Server）
+    allow_origins=["https://aiinterviewer-frontend.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
