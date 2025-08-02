@@ -288,6 +288,7 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket):
         評分維度：{', '.join(evaluation_dimensions)}
         請以 JSON 格式返回評分結果，例如：
         {{"技術深度": 4, "領導能力": 3, "溝通能力": 5, "抗壓能力": 4, "解決問題能力": 4, "學習能力": 4, "團隊合作": 5, "創新思維": 4}}
+        以及你內心的想法
         """
         
         payload_evaluation = {
