@@ -1,9 +1,270 @@
--txt--highlight'>AI</em> 應用，並將成果貢獻於開源社群的可能性。\n2. 熟悉React, JavaScript, Python, Bootstrap\n3. 可以與前後端<em class='b-txt--highlight'>工程師</em>合作，完成開發\n4. 能夠獨立 debug 及解決問題\n5.", 'tags': {'emp': {'desc': '員工20人', 'param': '3'}}, 'landmark': '距捷運忠孝復興站約310公尺', 'link': {'applyAnalyze': '//www.104.com.tw/jobs/apply/analysis/8s9ep?channel=104rpt&jobsource=apply_analyze', 'job': '//www.104.com.tw/job/8s9ep?jobsource=n104bank2', 'cust': '//www.104.com.tw/company/1a2x6bmwfz?jobsource=n104bank2'}, 'jobsource': '', 'jobNameRaw': 'AI工程師', 'custNameRaw': '台北市私立究吉學府文理技藝短期補習班', 'lon': '121.5468642', 'lat': '25.0413707', 'remoteWorkType': 0, 'major': [], 'salaryType': 'H', 'dist': 0.31, 'mrt': 99001001010, 'mrtDesc': '捷運忠孝復興站', 'hrBehaviorPR': 0.31598806360033016, 'interactionRecord': {'lastProcessedResumeAtTime': 1754043550, 'lastCustReplyTimestamp': None, 'nowTimestamp': 1754077835}}
-backend-1  | INFO:root:Processing job: AI工程師, jobNo: 14755489, Generated URL: https://www.104.com.tw/job/14755489
-backend-1  | INFO:root:Full job object from 104 API: {'jobType': '0', 'jobNo': '14477660', 'jobName': '生成式AI工程師', 'jobNameSnippet': "生成式<em class='b-txt--highlight'>AI</em><em class='b-txt--highlight'>工程師</em>", 'jobRole': '1', 'jobRo': '1', 'jobAddrNo': '6001001010', 'jobAddrNoDesc': '台北市內湖區', 'jobAddress': '新湖二路128號', 'description': '1. 圖像 [[[AI]]] 生成式技術的開發及應用\n2. 生成式 [[[AI]]] 技術應用之流程開發\n3. 協助其他[[[AI]]][[[工程師]]]進行LLM相關應用開發\n4. 依據使用者需求規劃及執行應用專案', 'descWithoutHighlight': '1. 圖像 AI 生成式技術的開發及應用\n2. 生成式 AI 技術應用之流程開發\n3. 協助其他AI工程師進行LLM相關應用開發\n4. 依據使用者需求規劃及執行應用專案', 'optionEdu': '大學', 'period': '00', 'periodDesc': '經歷不拘', 'applyCnt': '00002', 'applyType': 1, 'applyDesc': '0~5人應徵', 'custNo': '130000000146688', 'custName': '智慧價值股份有限公司', 'coIndustry': '1001001006', 'coIndustryDesc': '其它軟體及網路相關業', 'salaryLow': '0000000', 'salaryHigh': '0000000', 'salaryDesc': '待遇面議', 's10': '10', 'appearDate': '20250801', 'appearDateDesc': '8/01', 'optionZone': '0', 'isApply': '0', 'applyDate': '', 'userApplyCount': 0, 'isSave': '0', 'descSnippet': "1. 圖像 <em class='b-txt--highlight'>AI</em> 生成式技術的開發及應用\n2. 生成式 <em class='b-txt--highlight'>AI</em> 技術應用之流程開發\n3. 協助其他<em class='b-txt--highlight'>AI</em><em class='b-txt--highlight'>工程師</em>進行LLM相關應用開發\n4. 依據使用者需求規劃及執行應用專案", 'tags': {'emp': {'desc': '員工40人', 'param': '4'}}, 'landmark': '', 'link': {'applyAnalyze': '//www.104.com.tw/jobs/apply/analysis/8mb18?channel=104rpt&jobsource=apply_analyze', 'job': '//www.104.com.tw/job/8mb18?jobsource=n104bank2', 'cust': '//www.104.com.tw/company/1a2x6bl4hs?jobsource=n104bank2'}, 'jobsource': '', 'jobNameRaw': '生成式AI工程師', 'custNameRaw': '智慧價值股份有限公司', 'lon': '121.578749', 'lat': '25.062436', 'remoteWorkType': 0, 'major': [], 'salaryType': '', 'dist': '', 'mrt': '', 'mrtDesc': '', 'hrBehaviorPR': 0.15637273131309468, 'interactionRecord': {'lastProcessedResumeAtTime': 1754020018, 'lastCustReplyTimestamp': None, 'nowTimestamp': 1754077835}}
-backend-1  | INFO:root:Processing job: 生成式AI工程師, jobNo: 14477660, Generated URL: https://www.104.com.tw/job/14477660
-backend-1  | INFO:root:Full job object from 104 API: {'jobType': '0', 'jobNo': '14437843', 'jobName': 'AI 工程師', 'jobNameSnippet': "<em class='b-txt--highlight'>AI</em> <em class='b-txt--highlight'>工程師</em>", 'jobRole': '1', 'jobRo': '1', 'jobAddrNo': '6001001005', 'jobAddrNoDesc': '台北市大安區', 'jobAddress': '光復南路102號5樓', 'description': '工作任務\n\n1. 生成式[[[AI]]]專案開發： 設計、實施和優化生成式[[[AI]]]專案以解決問題。\n\n2. 數 據前處理： 清理和處理數據，確保資料品質，以支援[[[AI]]]專案的訓練和測試。\n\n3. LLM搭配模型評估和優化： 評估LLM搭配與模型性能，進行專案調整和優化', 'descWithoutHighlight': '工作任務\n\n1. 生成式AI專案開發： 設計、實施和優化生成式AI專案以解決問題。\n\n2. 數據前處理： 清理和處理數據，確保資料品質，以支援AI專案的訓練和測試。\n\n3. LLM搭配模型評估和優化： 評估LLM搭配與模型性能，進行專案調整和優化', 'optionEdu': '大學', 'period': '00', 'periodDesc': '經歷不拘', 'applyCnt': '00006', 'applyType': 2, 'applyDesc': '6~10人應徵', 'custNo': '130000000054700', 'custName': '流線傳媒股份有限公司', 'coIndustry': '1005002005', 'coIndustryDesc': '其他出版業', 'salaryLow': '0000000', 'salaryHigh': '0000000', 'salaryDesc': '待遇面議', 's10': '10', 'appearDate': '20250801', 'appearDateDesc': '8/01', 'optionZone': '0', 'isApply': '0', 'applyDate': '', 'userApplyCount': 0, 'isSave': '0', 'descSnippet': "工作任務\n\n1. 生成式<em class='b-txt--highlight'>AI</em>專案開發： 設計、實施和優化生成式<em class='b-txt--highlight'>AI</em>專案以解決問題。\n\n2. 數據前處理： 清理和處理數據，確保資料品質，以支援<em class='b-txt--highlight'>AI</em>專案的訓練和測試。\n\n3. LLM搭配模型評估和優化： 評估LLM搭配與模型性能，進行專案調整和優化", 'tags': {'emp': {'desc': '員工42人', 'param': '4'}}, 'landmark': '距捷運國父紀念館站約240公尺', 'link': {'applyAnalyze': '//www.104.com.tw/jobs/apply/analysis/8lgb7?channel=104rpt&jobsource=apply_analyze', 'job': '//www.104.com.tw/job/8lgb7?jobsource=n104bank2', 'cust': '//www.104.com.tw/company/1a2x6bj5ik?jobsource=n104bank2'}, 'jobsource': '', 'jobNameRaw': 'AI 工程師', 'custNameRaw': '流線傳媒股份有限公司', 'lon': '121.5573873', 'lat': '25.0435149', 'remoteWorkType': 0, 'major': [], 'salaryType': '', 'dist': 0.24, 'mrt': 99001005017, 'mrtDesc': '捷運國父紀念館站', 'hrBehaviorPR': 0.36969052434898547, 'interactionRecord': {'lastProcessedResumeAtTime': 1754041715, 'lastCustReplyTimestamp': None, 'nowTimestamp': 1754077835}}
-backend-1  | INFO:root:Processing job: AI 工程師, jobNo: 14437843, Generated URL: https://www.104.com.tw/job/14437843
-backend-1  | INFO:     172.18.0.1:52918 - "GET /jobs?keyword=AI%E5%B7%A5%E7%A8%8B%E5%B8%AB HTTP/1.1" 200 OK
+INFO:root:Generated interview questions count: 2
+INFO:root:Gemini 回覆內容：假設您目前負責一個台語語音模型的微調專案，但在最終的驗證階段，發現模型在特定方言、語境或含有特定背景噪音的語料上，辨識準確率出現顯著下降。作為一位 AI 訓練／測試工程師，您會如何從技術面（包含模型診斷、資料處理、測試策略）著手診斷並解決這個問題？在此過程中，您會如何與團隊成員溝通協作，並提出哪些創新方法來提升未來的模型穩健性及語料品質？
+WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+INFO:     172.19.0.1:46874 - "POST /start_interview HTTP/1.1" 200 OK
+INFO:     172.19.0.1:34332 - "GET /static/audio/82ab971117924a5fb690ed9a2c68a673.mp3 HTTP/1.1" 206 Partial Content
+INFO:     172.19.0.1:34336 - "WebSocket /ws?session_id=1d754732-b2e2-44bc-9274-726d5d177c42" [accepted]
+INFO:     connection open
+INFO:root:Received audio chunk of size: 15618 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: timeout. Buffer size: 32040 bytes.
+INFO:root:Processing audio chunk of size: 32040 bytes.
+INFO:root:Audio temporary file path: /tmp/tmp2znyjlsx.webm
+INFO:root:Whisper 轉錄結果: 可以做那個
+INFO:root:Whisper transcription took 24.28 seconds.
+INFO:root:Raw transcribed text from Whisper: '可以做那個'
+INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBMABo3DwiB7bzOLpwu3aqEVhUeJvgO7Zc "HTTP/1.1 200 OK"
+INFO:root:Gemini 對回答的評語：
+{
+    "技術深度": 1,
+    "領導能力": 1,
+    "溝通能力": 1,
+    "抗壓能力": 2,
+    "解決問題能力": 1,
+    "學習能力": 1,
+    "團隊合作": 1,
+    "創新思維": 1
+}
 
-我看後端有顯示職缺TITLE以外 也有顯示104上該職缺的詳細內容 應該代表資料確實爬的到 現在程式有把職缺詳細內容給ai參考用來生成面試問題嗎?
+我內心的想法：
+
+「聽到『可以做那個』這個回答，我內心是感到非常驚訝與不解的。這是一個針對『AI 訓練／測試工程師』職位，關於台語語音模型微調專案中遇到複雜技術問題的詳細提問，內容涵蓋了模型診斷、資料處理、測試策略、團隊協作、創新方法等多個層面。應徵者的回答卻只有短短四個字，且毫無實質內容。
+
+從這個回答中，我無法獲取任何關於應徵者技術能力、問題解決思路或溝通表達能力的資訊。這不僅是一個極度模糊的答案，更像是沒有準備或根本不理解問題深度的表現。即使面部情緒顯示為『neutral』（中性），這也僅能說明應徵者表面上沒有表現出慌亂，但實際的應答內容卻完全未能達到一個專業職位所應有的水平。
+
+我會判斷應徵者：
+
+1.  **缺乏專業知識或表達能力：** 無法將其可能的知識具體化並表達出來。
+2.  **嚴重低估問題複雜性：** 認為一句簡短的『可以做那個』足以回應如此深入的問題。
+3.  **溝通能力不足：** 無法有效且清晰地傳達資訊。
+
+在真實的面試情境中，我會立刻追問：「您是否能具體說明一下，您所指的『那個』包含哪些具體的步驟和方法呢？請您從技術細節、資料處理流程、測試策略以及團隊協作方面，更詳細地闡述您的想法。」來確認他是否有任何潛在的理 解或只是表達能力上的障礙。
+
+但僅根據當前提供的資訊，這個回答幾乎沒有提供任何可供評估的正面依據，因此在大多數維度上我只能給出最低分，僅在抗壓能力上因為『中性』情緒而給出略高於最低的分數，表示他至少沒有表現出明顯的壓力崩潰，但這並不代表他 能有效應對問題。」
+WARNING:root:No JSON markdown block found for evaluation. Using raw text: {
+    "技術深度": 1,
+    "領導能力": 1,
+    "溝通能力": 1,
+    "抗壓能力": 2,
+    "解決問題能力": 1,
+    "學習能力": 1,
+    "團隊合作": 1,
+    "創新思維": 1
+}
+
+我內心的想法：
+
+「聽到『可以做那個』這個回答，我內心是感到非常驚訝與不解的。這是一個針對『AI 訓練／測試工程師』職位，關於台語語音模型微調專案中遇到複雜技術問題的詳細提問，內容涵蓋了模型診斷、資料處理、測試策略、團隊協作、創新方法等多個層面。應徵者的回答卻只有短短四個字，且毫無實質內容。
+
+從這個回答中，我無法獲取任何關於應徵者技術能力、問題解決思路或溝通表達能力的資訊。這不僅是一個極度模糊的答案，更像是沒有準備或根本不理解問題深度的表現。即使面部情緒顯示為『neutral』（中性），這也僅能說明應徵者表面上沒有表現出慌亂，但實際的應答內容卻完全未能達到一個專業職位所應有的水平。
+
+我會判斷應徵者：
+
+1.  **缺乏專業知識或表達能力：** 無法將其可能的知識具體化並表達出來。
+2.  **嚴重低估問題複雜性：** 認為一句簡短的『可以做那個』足以回應如此深入的問題。
+3.  **溝通能力不足：** 無法有效且清晰地傳達資訊。
+
+在真實的面試情境中，我會立刻追問：「您是否能具體說明一下，您所指的『那個』包含哪些具體的步驟和方法呢？請您從技術細節、資料處理流程、測試策略以及團隊協作方面，更詳細地闡述您的想法。」來確認他是否有任何潛在的理 解或只是表達能力上的障礙。
+
+但僅根據當前提供的資訊，這個回答幾乎沒有提供任何可供評估的正面依據，因此在大多數維度上我只能給出最低分，僅在抗壓能力上因為『中性』情緒而給出略高於最低的分數，表示他至少沒有表現出明顯的壓力崩潰，但這並不代表他 能有效應對問題。」
+ERROR:root:Gemini 返回的評分不是有效的 JSON: {
+    "技術深度": 1,
+    "領導能力": 1,
+    "溝通能力": 1,
+    "抗壓能力": 2,
+    "解決問題能力": 1,
+    "學習能力": 1,
+    "團隊合作": 1,
+    "創新思維": 1
+}
+
+我內心的想法：
+
+「聽到『可以做那個』這個回答，我內心是感到非常驚訝與不解的。這是一個針對『AI 訓練／測試工程師』職位，關於台語語音模型微調專案中遇到複雜技術問題的詳細提問，內容涵蓋了模型診斷、資料處理、測試策略、團隊協作、創新方法等多個層面。應徵者的回答卻只有短短四個字，且毫無實質內容。
+
+從這個回答中，我無法獲取任何關於應徵者技術能力、問題解決思路或溝通表達能力的資訊。這不僅是一個極度模糊的答案，更像是沒有準備或根本不理解問題深度的表現。即使面部情緒顯示為『neutral』（中性），這也僅能說明應徵者表面上沒有表現出慌亂，但實際的應答內容卻完全未能達到一個專業職位所應有的水平。
+
+我會判斷應徵者：
+
+1.  **缺乏專業知識或表達能力：** 無法將其可能的知識具體化並表達出來。
+2.  **嚴重低估問題複雜性：** 認為一句簡短的『可以做那個』足以回應如此深入的問題。
+3.  **溝通能力不足：** 無法有效且清晰地傳達資訊。
+
+在真實的面試情境中，我會立刻追問：「您是否能具體說明一下，您所指的『那個』包含哪些具體的步驟和方法呢？請您從技術細節、資料處理流程、測試策略以及團隊協作方面，更詳細地闡述您的想法。」來確認他是否有任何潛在的理 解或只是表達能力上的障礙。
+
+但僅根據當前提供的資訊，這個回答幾乎沒有提供任何可供評估的正面依據，因此在大多數維度上我只能給出最低分，僅在抗壓能力上因為『中性』情緒而給出略高於最低的分數，表示他至少沒有表現出明顯的壓力崩潰，但這並不代表他 能有效應對問題。」. Error: Extra data: line 12 column 1 (char 126)
+INFO:root:Gemini 回覆內容：您在職責中需要同時建立 AI 產品的測試計畫與指標，以及維護與把關台語、繁體中文語料庫的品質。請分享您會如何在這兩項核心任務之間進行時間與資源的分配和優先級管理？具體而言，您會如何設計一套全面且有效的 AI 產品測試策略，並同時確保語料標註的精確性與一致性？在面對資料品質或測試指標定義上的挑戰時，您曾如何解決或提出創新方案？
+WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: buffer_size_limit. Buffer size: 65688 bytes.
+INFO:root:Processing audio chunk of size: 65688 bytes.
+INFO:root:Audio temporary file path: /tmp/tmp0jtyb9vo.webm
+ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp0jtyb9vo.webm: Invalid data found when processing input
+. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp0jtyb9vo.webm: Invalid data found when processing input
+
+INFO:root:Raw transcribed text from Whisper: ''
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: buffer_size_limit. Buffer size: 65688 bytes.
+INFO:root:Processing audio chunk of size: 65688 bytes.
+INFO:root:Audio temporary file path: /tmp/tmp51i_lp7v.webm
+ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp51i_lp7v.webm: Invalid data found when processing input
+. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp51i_lp7v.webm: Invalid data found when processing input
+
+INFO:     172.19.0.1:34586 - "GET /static/audio/548ce08a18a84bb7a8f71f881de52045.mp3 HTTP/1.1" 206 Partial Content
+INFO:root:Raw transcribed text from Whisper: ''
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: buffer_size_limit. Buffer size: 65688 bytes.
+INFO:root:Processing audio chunk of size: 65688 bytes.
+INFO:root:Audio temporary file path: /tmp/tmp5qbj4gkj.webm
+ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp5qbj4gkj.webm: Invalid data found when processing input
+. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmp5qbj4gkj.webm: Invalid data found when processing input
+
+INFO:root:Raw transcribed text from Whisper: ''
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16108 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: buffer_size_limit. Buffer size: 65374 bytes.
+INFO:root:Processing audio chunk of size: 65374 bytes.
+INFO:root:Audio temporary file path: /tmp/tmpij73tl9r.webm
+ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmpij73tl9r.webm: Invalid data found when processing input
+. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmpij73tl9r.webm: Invalid data found when processing input
+
+INFO:root:Raw transcribed text from Whisper: ''
+INFO:root:Received audio chunk of size: 10625 bytes
+INFO:root:Processing audio buffer for session 1d754732-b2e2-44bc-9274-726d5d177c42. Trigger: timeout. Buffer size: 10625 bytes.
+INFO:root:Processing audio chunk of size: 10625 bytes.
+INFO:root:Audio temporary file path: /tmp/tmpyxpd31lf.webm
+ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmpyxpd31lf.webm: Invalid data found when processing input
+. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 10 (Debian 10.2.1-6)
+  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
+  libavutil      56. 51.100 / 56. 51.100
+  libavcodec     58. 91.100 / 58. 91.100
+  libavformat    58. 45.100 / 58. 45.100
+  libavdevice    58. 10.100 / 58. 10.100
+  libavfilter     7. 85.100 /  7. 85.100
+  libavresample   4.  0.  0 /  4.  0.  0
+  libswscale      5.  7.100 /  5.  7.100
+  libswresample   3.  7.100 /  3.  7.100
+  libpostproc    55.  7.100 / 55.  7.100
+/tmp/tmpyxpd31lf.webm: Invalid data found when processing input
+
+INFO:root:Raw transcribed text from Whisper: ''
