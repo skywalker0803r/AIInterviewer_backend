@@ -9,10 +9,10 @@ import logging
 import json
 import asyncio
 
-from .config import BACKEND_PUBLIC_URL
-from .speech_to_text import load_whisper_model
-from .interview_manager import InterviewManager
-from .job_scraper import get_jobs_from_104
+from config import BACKEND_PUBLIC_URL
+from speech_to_text import load_whisper_model
+from interview_manager import InterviewManager
+from job_scraper import get_jobs_from_104
 
 logging.basicConfig(level=logging.INFO)
 
