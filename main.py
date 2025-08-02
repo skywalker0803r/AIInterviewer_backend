@@ -20,7 +20,7 @@ app = FastAPI()
 interview_manager = InterviewManager()
 
 # Mount static files (e.g., audio files)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=(os.makedirs("static", exist_ok=True) or "static")), name="static")
 
 # Allow CORS
 app.add_middleware(
