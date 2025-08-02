@@ -1,0 +1,82 @@
+目前的問題是我在UI輸入職缺
+選擇職缺
+開始模擬面試
+之後後端出現
+backend-1  | INFO:root:接收到搜尋職缺關鍵字：ai工程師
+backend-1  | INFO:httpx:HTTP Request: GET https://www.104.com.tw/jobs/search/list?ro=0&keyword=ai%E5%B7%A5%E7%A8%8B%E5%B8%AB&jobcatExpMore=1&order=11&page=1 "HTTP/1.1 200 OK"
+backend-1  | INFO:root:104 JSON API 回應狀態碼：200
+backend-1  | INFO:root:擷取到職缺數量：22
+backend-1  | INFO:     172.18.0.1:51396 - "GET /jobs?keyword=ai%E5%B7%A5%E7%A8%8B%E5%B8%AB HTTP/1.1" 200 OK
+backend-1  | WARNING:  Unsupported upgrade request.
+backend-1  | WARNING:  No supported WebSocket library detected. Please use "pip install 'uvicorn[standard]'", or install 'websockets' or 'wsproto' manually.
+backend-1  | INFO:     172.18.0.1:51402 - "GET /ws HTTP/1.1" 404 Not Found
+backend-1  | INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBMABo3DwiB7bzOLpwu3aqEVhUeJvgO7Zc "HTTP/1.1 200 OK"
+backend-1  | INFO:root:Gemini API 回應：{
+backend-1  |   "candidates": [
+backend-1  |     {
+backend-1  |       "content": {
+backend-1  |         "parts": [
+backend-1  |           {
+backend-1  |             "text": "您好，歡迎您！我是今天的面試官。很高興您能來參加我們「AI Agent 開發工程師」職位的第一輪面試。\n\n首先，請您簡單介紹一下自己，並請您特別分享一下，您過去的經驗或專業背景，有哪些方面是您認為與我們『AI Agent 開發工程師』這個職位高度相關的？以及是什麼原因讓您對這個職位特別感興趣？"
+backend-1  |           }
+backend-1  |         ],
+backend-1  |         "role": "model"
+backend-1  |       },
+backend-1  |       "finishReason": "STOP",
+backend-1  |       "index": 0
+backend-1  |     }
+backend-1  |   ],
+backend-1  |   "usageMetadata": {
+backend-1  |     "promptTokenCount": 69,
+backend-1  |     "candidatesTokenCount": 94,
+backend-1  |     "totalTokenCount": 1130,
+backend-1  |     "promptTokensDetails": [
+backend-1  |       {
+backend-1  |         "modality": "TEXT",
+backend-1  |         "tokenCount": 69
+backend-1  |       }
+backend-1  |     ],
+backend-1  |     "thoughtsTokenCount": 967
+backend-1  |   },
+backend-1  |   "modelVersion": "gemini-2.5-flash",
+backend-1  |   "responseId": "QL6MaJKKO57F1MkPo47uqQw"
+backend-1  | }
+backend-1  | INFO:root:Gemini 回覆內容：您好，歡迎您！我是今天的面試官。很高興您能來參加我們「AI Agent 開發工程師」職位的第一輪面試。
+backend-1  |
+backend-1  | 首先，請您簡單介紹一下自己，並請您特別分享一下，您過去的經驗或專業背景，有哪些方面是您認為與我們『AI Agent 開發工程師』這個職位高度相關的？以及是什麼原因讓您對這個職位特別感興趣？
+backend-1  | WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+backend-1  | INFO:     172.18.0.1:51406 - "POST /start_interview HTTP/1.1" 200 OK
+前端出現
+script.js:106 啟動視訊失敗，改用語音模式 NotReadableError: Could not start video source
+overrideMethod @ hook.js:608
+(anonymous) @ script.js:106
+await in (anonymous)
+dispatch @ jquery-3.7.0.min.js:2
+v.handle @ jquery-3.7.0.min.js:2Understand this warning
+script.js:113 WebSocket connection to 'ws://127.0.0.1:8002/ws' failed: 
+(anonymous) @ script.js:113Understand this error
+script.js:149 WebSocket error (audio-only): Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
+overrideMethod @ hook.js:608
+ws.onerror @ script.js:149Understand this error
+script.js:141 WebSocket disconnected (audio-only)
+127.0.0.1:8001/static/audio/049460a786a44d168edb4d492c026519.mp3:1  GET http://127.0.0.1:8001/static/audio/049460a786a44d168edb4d492c026519.mp3 net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost/:1 Uncaught (in promise) NotSupportedError: Failed to load because no supported source was found.
+
+目前前端卡在
+script.js:102 啟動視訊失敗，改用語音模式 NotReadableError: Could not start video source
+
+script.js:112 WebSocket connected (audio-only)
+favicon.ico:1 
+ GET http://localhost:5500/favicon.ico 404 (File not found)
+script.js:211 Recording started.
+script.js:193 Recording stopped. Sending audio to backend.
+﻿
+
+目前後端卡在
+INFO:root:Gemini 回覆內容：您好，歡迎您來參加今天的面試。很高興能有機會和您聊聊。
+
+首先，能否請您簡單介紹一下自己，特別是您認為哪些經驗和能力會讓您很適合我們這個AI Agent開發工程師的職位呢？
+WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+INFO:     172.18.0.1:48522 - "POST /start_interview HTTP/1.1" 200 OK
+INFO:     172.18.0.1:40558 - "GET /static/audio/f3036ad9f2134bd4a5b3c154489d65bc.mp3 HTTP/1.1" 206 Partial Content
+
