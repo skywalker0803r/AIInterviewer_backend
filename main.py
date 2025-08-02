@@ -53,7 +53,18 @@ interview_sessions = {} # New: To store conversation history and job info per se
 async def load_whisper_model():
     global whisper_model
     logging.info("Loading Whisper model...")
-    # Check for GPU availability
+
+    # Configure TensorFlow to allow memory growth on GPU
+    import tensorflow as tf
+    physical_devices = tf.config.list_physical_devices('GPU')
+    if physical_devices:
+        for device in physical_devices:
+            tf.config.experimental.set_memory_growth(device, True)
+        logging.info("Configured TensorFlow to allow memory growth on GPU.")
+    else:
+        logging.info("No GPU devices found for TensorFlow. DeepFace will run on CPU if used.")
+
+    # Check for GPU availability for Whisper
     import torch
     if torch.cuda.is_available():
         logging.info("CUDA is available. Using GPU for Whisper.")

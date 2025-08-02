@@ -6,4 +6,4 @@ python-dotenv
 gTTS
 openai-whisper
 deepface
-tf-keras
+tensorflow
