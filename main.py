@@ -15,10 +15,13 @@ import whisper
 import tempfile
 import time # Import time for performance logging
 from deepface import DeepFace # 雖然目前沒有影像串流，但先引入
+import asyncio # Import asyncio for sleep
+
 #123
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # 請設在 .env 或環境變數
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL") # Default to localhost for local development
 
 logging.basicConfig(level=logging.INFO) # Change to INFO for less verbose logging
 
@@ -184,7 +187,9 @@ async def start_interview(request: Request):
                 "interview_questions": interview_questions,
                 "current_question_index": 0,
                 "evaluation_dimensions": evaluation_dimensions,
-                "evaluation_results": {dim: [] for dim in evaluation_dimensions}
+                "evaluation_results": {dim: [] for dim in evaluation_dimensions},
+                "audio_buffer": b"", # New: Buffer for incoming audio chunks
+                "last_audio_time": time.time() # New: Timestamp of last audio chunk
             }
 
             # Get the first question
@@ -202,7 +207,7 @@ async def start_interview(request: Request):
 
             return JSONResponse({
                 "text": first_question,
-                "audio_url": f"http://127.0.0.1:8002/static/audio/{audio_filename}",
+                "audio_url": f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}",
                 "session_id": session_id # Return the session ID
             })
 
@@ -246,6 +251,114 @@ async def process_user_input(audio_chunk: bytes, video_frame: bytes = None):
 
     return transcribed_text, emotion
 
+async def process_audio_buffer(session_id: str, websocket: WebSocket):
+    session_data = interview_sessions[session_id]
+    audio_buffer = session_data["audio_buffer"]
+    
+    if not audio_buffer:
+        return
+
+    # Clear the buffer immediately to avoid reprocessing
+    session_data["audio_buffer"] = b""
+    
+    user_text, user_emotion = await process_user_input(audio_buffer)
+
+    if user_text.strip(): # 只有當使用者有說話時才進行處理
+        logging.debug(f"User transcribed text: {user_text}")
+        # 將使用者轉錄的文字發送回前端顯示
+        await websocket.send_json({"speaker": "你", "text": user_text})
+
+        # 將使用者輸入加入對話歷史
+        session_data["conversation_history"].append({"role": "user", "parts": [{"text": user_text}]})
+
+        # --- 評分邏輯 --- #
+        logging.debug("Starting evaluation logic...")
+        current_question_index = session_data["current_question_index"]
+        interview_questions = session_data["interview_questions"]
+        evaluation_dimensions = session_data["evaluation_dimensions"]
+        evaluation_results = session_data["evaluation_results"]
+        job_title = session_data["job_title"]
+
+        current_question_obj = interview_questions[current_question_index]
+        current_question_text = current_question_obj["question"]
+
+        evaluation_prompt = f"""你是一位專業的面試官，正在評估應徵「{job_title}」職位的候選人。候選人剛才回答了你的問題：「{current_question_text}」。
+        候選人的回答是：「{user_text}」。
+        請你根據候選人的回答，對其在以下 8 個維度的表現進行 1 到 5 分的評分（1分最低，5分最高）。
+        評分維度：{', '.join(evaluation_dimensions)}
+        請以 JSON 格式返回評分結果，例如：
+        {{"技術深度": 4, "領導能力": 3, "溝通能力": 5, "抗壓能力": 4, "解決問題能力": 4, "學習能力": 4, "團隊合作": 5, "創新思維": 4}}
+        """
+        
+        payload_evaluation = {
+            "contents": [
+                {"parts": [{"text": evaluation_prompt}]}
+            ]
+        }
+
+        logging.debug("Calling Gemini API for evaluation...")
+        async with httpx.AsyncClient() as client:
+            gemini_evaluation_reply = await call_gemini_api(client, payload_evaluation)
+            logging.debug(f"Gemini Evaluation API raw response: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
+
+            if "candidates" in gemini_evaluation_reply and gemini_evaluation_reply["candidates"]:
+                evaluation_text = gemini_evaluation_reply["candidates"][0]["content"]["parts"][0]["text"]
+                # Extract JSON string from markdown code block
+                json_match = re.search(r"```json\n([\s\S]*?)\n```", evaluation_text)
+                if json_match:
+                    extracted_json_string = json_match.group(1)
+                    logging.info(f"Extracted JSON string for evaluation: {extracted_json_string}")
+                else:
+                    extracted_json_string = evaluation_text # Fallback if no markdown block
+                    logging.warning(f"No JSON markdown block found for evaluation. Using raw text: {extracted_json_string}")
+
+                try:
+                    scores = json.loads(extracted_json_string)
+                    for dim in evaluation_dimensions:
+                        if dim in scores and isinstance(scores[dim], (int, float)):
+                            evaluation_results[dim].append(scores[dim])
+                    logging.info(f"評分結果：{scores}")
+                except json.JSONDecodeError as e:
+                    logging.error(f"Gemini 返回的評分不是有效的 JSON: {evaluation_text}. Error: {e}")
+            else:
+                logging.warning(f"Gemini 未返回評分結果或 candidates 為空。原始回應: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
+
+        # --- 面試流程控制 --- #
+        logging.debug(f"Current question index: {current_question_index}, Total questions: {len(interview_questions)}")
+        session_data["current_question_index"] += 1
+        if session_data["current_question_index"] < len(interview_questions):
+            logging.debug("Moving to next question.")
+            # Ask next question
+            next_question_obj = interview_questions[session_data["current_question_index"]]
+            gemini_response_text = next_question_obj["question"]
+            session_data["conversation_history"].append({"role": "model", "parts": [{"text": gemini_response_text}]})
+
+            logging.info(f"Gemini 回覆內容：{gemini_response_text}")
+            tts = gTTS(gemini_response_text, lang="zh-TW")
+            audio_filename = f"{uuid.uuid4().hex}.mp3"
+            audio_path = f"static/audio/{audio_filename}"
+            os.makedirs("static/audio", exist_ok=True)
+            tts.save(audio_path)
+            audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
+
+            await websocket.send_json({"text": gemini_response_text, "audio_url": audio_url})
+        else:
+            # End of interview
+            logging.info("All questions answered. Ending interview.")
+            final_message = "謝謝您今天來參加面試，面試到此結束。"
+            session_data["conversation_history"].append({"role": "model", "parts": [{"text": final_message}]})
+
+            logging.info(f"面試結束訊息：{final_message}")
+            tts = gTTS(final_message, lang="zh-TW")
+            audio_filename = f"{uuid.uuid4().hex}.mp3"
+            audio_path = f"static/audio/{audio_filename}"
+            os.makedirs("static/audio", exist_ok=True)
+            tts.save(audio_path)
+            audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
+
+            await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
+            logging.debug(f"Sent interview_ended signal for session {session_id}.")
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
@@ -267,7 +380,14 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     try:
         while True:
             logging.debug("Waiting for data from frontend...")
-            message = await websocket.receive()
+            try:
+                message = await asyncio.wait_for(websocket.receive(), timeout=0.1) # Short timeout to allow periodic processing
+            except asyncio.TimeoutError:
+                # No message received, process buffer if needed
+                if session_id in interview_sessions and session_data["audio_buffer"] and (time.time() - session_data["last_audio_time"] > 1.0): # Process if buffer has data and no new audio for 1 second
+                    await process_audio_buffer(session_id, websocket)
+                continue # Continue to next loop iteration
+
             logging.debug(f"Received WebSocket message: {message.keys()}")
             
             if "text" in message: # Handle text messages (e.g., end_interview signal)
@@ -275,6 +395,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     json_message = json.loads(message["text"])
                     if json_message.get("type") == "end_interview":
                         logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
+                        # Process any remaining audio in buffer before closing
+                        if session_data["audio_buffer"]:
+                            await process_audio_buffer(session_id, websocket)
                         await websocket.close()
                         logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
                         return
@@ -285,110 +408,28 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 data = message["bytes"]
                 logging.info(f"Received audio chunk of size: {len(data)} bytes")
 
-                user_text, user_emotion = await process_user_input(data)
+                session_data["audio_buffer"] += data
+                session_data["last_audio_time"] = time.time()
 
-                if user_text.strip(): # 只有當使用者有說話時才進行處理
-                    logging.debug(f"User transcribed text: {user_text}")
-                    # 將使用者轉錄的文字發送回前端顯示
-                    await websocket.send_json({"speaker": "你", "text": user_text})
-
-                    # 將使用者輸入加入對話歷史
-                    conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
-
-                    # --- 評分邏輯 --- #
-                    logging.debug("Starting evaluation logic...")
-                    current_question_obj = interview_questions[current_question_index]
-                    current_question_text = current_question_obj["question"]
-
-                    evaluation_prompt = f"""你是一位專業的面試官，正在評估應徵「{job_title}」職位的候選人。候選人剛才回答了你的問題：「{current_question_text}」。
-                    候選人的回答是：「{user_text}」。
-                    請你根據候選人的回答，對其在以下 8 個維度的表現進行 1 到 5 分的評分（1分最低，5分最高）。
-                    評分維度：{', '.join(evaluation_dimensions)}
-                    請以 JSON 格式返回評分結果，例如：
-                    {{"技術深度": 4, "領導能力": 3, "溝通能力": 5, "抗壓能力": 4, "解決問題能力": 4, "學習能力": 4, "團隊合作": 5, "創新思維": 4}}
-                    """
-                    
-                    payload_evaluation = {
-                        "contents": [
-                            {"parts": [{"text": evaluation_prompt}]}
-                        ]
-                    }
-
-                    logging.debug("Calling Gemini API for evaluation...")
-                    async with httpx.AsyncClient() as client:
-                        gemini_evaluation_reply = await call_gemini_api(client, payload_evaluation)
-                        logging.debug(f"Gemini Evaluation API raw response: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
-
-                        if "candidates" in gemini_evaluation_reply and gemini_evaluation_reply["candidates"]:
-                            evaluation_text = gemini_evaluation_reply["candidates"][0]["content"]["parts"][0]["text"]
-                            # Extract JSON string from markdown code block
-                            json_match = re.search(r"```json\n([\s\S]*?)\n```", evaluation_text)
-                            if json_match:
-                                extracted_json_string = json_match.group(1)
-                                logging.info(f"Extracted JSON string for evaluation: {extracted_json_string}")
-                            else:
-                                extracted_json_string = evaluation_text # Fallback if no markdown block
-                                logging.warning(f"No JSON markdown block found for evaluation. Using raw text: {extracted_json_string}")
-
-                            try:
-                                scores = json.loads(extracted_json_string)
-                                for dim in evaluation_dimensions:
-                                    if dim in scores and isinstance(scores[dim], (int, float)):
-                                        evaluation_results[dim].append(scores[dim])
-                                logging.info(f"評分結果：{scores}")
-                            except json.JSONDecodeError as e:
-                                logging.error(f"Gemini 返回的評分不是有效的 JSON: {evaluation_text}. Error: {e}")
-                        else:
-                            logging.warning(f"Gemini 未返回評分結果或 candidates 為空。原始回應: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
-
-                    # --- 面試流程控制 --- #
-                    logging.debug(f"Current question index: {current_question_index}, Total questions: {len(interview_questions)}")
-                    session_data["current_question_index"] += 1
-                    if session_data["current_question_index"] < len(interview_questions):
-                        logging.debug("Moving to next question.")
-                        # Ask next question
-                        next_question_obj = interview_questions[session_data["current_question_index"]]
-                        gemini_response_text = next_question_obj["question"]
-                        conversation_history.append({"role": "model", "parts": [{"text": gemini_response_text}]})
-
-                        logging.info(f"Gemini 回覆內容：{gemini_response_text}")
-                        tts = gTTS(gemini_response_text, lang="zh-TW")
-                        audio_filename = f"{uuid.uuid4().hex}.mp3"
-                        audio_path = f"static/audio/{audio_filename}"
-                        os.makedirs("static/audio", exist_ok=True)
-                        tts.save(audio_path)
-                        audio_url = f"http://127.0.0.1:8002/static/audio/{audio_filename}"
-
-                        await websocket.send_json({"text": gemini_response_text, "audio_url": audio_url})
-                    else:
-                        # End of interview
-                        logging.info("All questions answered. Ending interview.")
-                        final_message = "謝謝您今天來參加面試，面試到此結束。"
-                        conversation_history.append({"role": "model", "parts": [{"text": final_message}]})
-
-                        logging.info(f"面試結束訊息：{final_message}")
-                        tts = gTTS(final_message, lang="zh-TW")
-                        audio_filename = f"{uuid.uuid4().hex}.mp3"
-                        audio_path = f"static/audio/{audio_filename}"
-                        os.makedirs("static/audio", exist_ok=True)
-                        tts.save(audio_path)
-                        audio_url = f"http://127.0.0.1:8002/static/audio/{audio_filename}"
-
-                        await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
-                        logging.debug(f"Sent interview_ended signal for session {session_id}.")
-                        # Optionally, send evaluation results here or trigger a separate endpoint call from frontend
-                        # For now, frontend will call /get_interview_report
-
+                # Process buffer immediately if it gets large enough (e.g., 50KB) or after a short delay
+                if len(session_data["audio_buffer"]) > 50 * 1024: # Process if buffer exceeds 50KB
+                    await process_audio_buffer(session_id, websocket)
             else:
                 logging.warning(f"Received unknown WebSocket message type: {message}")
 
     except WebSocketDisconnect:
         logging.info(f"Client disconnected from WebSocket for session {session_id}")
+        # Process any remaining audio in buffer on disconnect
+        if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
+            await process_audio_buffer(session_id, websocket)
         if session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up session on disconnect
             logging.info(f"Session {session_id} cleaned up on disconnect.")
     except Exception as e:
         logging.error(f"WebSocket error for session {session_id}: {e}", exc_info=True) # Log full traceback
+        # Process any remaining audio in buffer on error
+        if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
+            await process_audio_buffer(session_id, websocket)
         if session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up session on error
             logging.info(f"Session {session_id} cleaned up on error.")
