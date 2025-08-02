@@ -34,13 +34,26 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL") # Default to localhost for local development
 
+# New imports for GCS
+from google.cloud import storage
+import io
+
+# Suppress gTTS deprecation warning
+warnings.filterwarnings("ignore", message="'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.", category=UserWarning)
+
+#123
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL") # Default to localhost for local development
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME") # New: GCS bucket name
+
 logging.basicConfig(level=logging.INFO) # Change to INFO for less verbose logging
 
 app = FastAPI()
-# 提供靜態檔案（TTS 音訊）
-# 確保 static 資料夾存在
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Initialize GCS client
+storage_client = storage.Client()
 
 # 允許前端跨域請求
 app.add_middleware(
@@ -126,6 +139,25 @@ async def get_jobs(keyword: str = "前端工程師"):
             logging.error(f"解析 JSON 發生錯誤：{e}")
             return {"jobs": []}
         
+
+async def upload_audio_to_gcs(audio_content: bytes, filename: str) -> str:
+    """Uploads audio content to GCS and returns the public URL."""
+    if not GCS_BUCKET_NAME:
+        logging.error("GCS_BUCKET_NAME is not set. Cannot upload audio to GCS.")
+        raise ValueError("GCS_BUCKET_NAME environment variable is not set.")
+
+    bucket = storage_client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(f"audio/{filename}") # Store in an 'audio' folder within the bucket
+
+    # Upload the audio content
+    blob.upload_from_string(audio_content, content_type="audio/mpeg")
+
+    # Make the blob publicly accessible
+    blob.make_public()
+
+    public_url = blob.public_url
+    logging.info(f"Audio uploaded to GCS: {public_url}")
+    return public_url
 
 async def call_gemini_api(client,payload):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
@@ -225,14 +257,18 @@ async def start_interview(request: Request):
 
             logging.info(f"Gemini 回覆內容：{first_question}")
             tts = gTTS(first_question, lang="zh-TW")
+            
+            # Save audio to a BytesIO object
+            audio_stream = io.BytesIO()
+            tts.write_to_fp(audio_stream)
+            audio_stream.seek(0) # Rewind to the beginning of the stream
+
             audio_filename = f"{uuid.uuid4().hex}.mp3"
-            audio_path = f"static/audio/{audio_filename}"
-            os.makedirs("static/audio", exist_ok=True)
-            tts.save(audio_path)
+            audio_url = await upload_audio_to_gcs(audio_stream.getvalue(), audio_filename)
 
             return JSONResponse({
                 "text": first_question,
-                "audio_url": f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}",
+                "audio_url": audio_url,
                 "session_id": session_id # Return the session ID
             })
 
@@ -388,11 +424,14 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket, trigger_re
 
             logging.info(f"Gemini 回覆內容：{gemini_response_text}")
             tts = gTTS(gemini_response_text, lang="zh-TW")
+            
+            # Save audio to a BytesIO object
+            audio_stream = io.BytesIO()
+            tts.write_to_fp(audio_stream)
+            audio_stream.seek(0) # Rewind to the beginning of the stream
+
             audio_filename = f"{uuid.uuid4().hex}.mp3"
-            audio_path = f"static/audio/{audio_filename}"
-            os.makedirs("static/audio", exist_ok=True)
-            tts.save(audio_path)
-            audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
+            audio_url = await upload_audio_to_gcs(audio_stream.getvalue(), audio_filename)
 
             await websocket.send_json({"text": gemini_response_text, "audio_url": audio_url})
             logging.info("回傳前端: AI 回覆內容和音訊 URL")
@@ -404,11 +443,14 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket, trigger_re
 
             logging.info(f"面試結束訊息：{final_message}")
             tts = gTTS(final_message, lang="zh-TW")
+            
+            # Save audio to a BytesIO object
+            audio_stream = io.BytesIO()
+            tts.write_to_fp(audio_stream)
+            audio_stream.seek(0) # Rewind to the beginning of the stream
+
             audio_filename = f"{uuid.uuid4().hex}.mp3"
-            audio_path = f"static/audio/{audio_filename}"
-            os.makedirs("static/audio", exist_ok=True)
-            tts.save(audio_path)
-            audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
+            audio_url = await upload_audio_to_gcs(audio_stream.getvalue(), audio_filename)
 
             await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
             logging.info("回傳前端: 面試結束訊息和音訊 URL")
