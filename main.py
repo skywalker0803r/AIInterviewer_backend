@@ -87,10 +87,10 @@ async def load_whisper_model():
     import torch
     if torch.cuda.is_available():
         logging.info("CUDA is available. Using GPU for Whisper.")
-        whisper_model = whisper.load_model("turbo", device="cuda")
+        whisper_model = whisper.load_model("tiny", device="cuda")
     else:
         logging.info("CUDA is not available. Using CPU for Whisper.")
-        whisper_model = whisper.load_model("turbo", device="cpu")
+        whisper_model = whisper.load_model("tiny", device="cpu")
     logging.info("Whisper model loaded.")
 
 
