@@ -7,3 +7,4 @@ gTTS
 openai-whisper
 deepface
 tensorflow
+tf_keras
