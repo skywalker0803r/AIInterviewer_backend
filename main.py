@@ -257,6 +257,7 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
             logging.error(f"Whisper 語音轉文字失敗: {e}. Full error: {e}")
 
     if video_frame_base64:
+        import tensorflow as tf # Import tensorflow here to ensure it's loaded when needed
         try:
             # Decode base64 image data
             header, encoded = video_frame_base64.split(",", 1)
@@ -266,12 +267,25 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
             with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as img_tmpfile:
                 img_tmpfile.write(image_bytes)
                 img_tmpfile_path = img_tmpfile.name
+                
+                logging.info("Attempting DeepFace emotion analysis on GPU...")
                 demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
                 if demographies and len(demographies) > 0:
                     emotion = demographies[0]['dominant_emotion']
-                    logging.info(f"Deepface 情緒辨識結果: {emotion}")
+                    logging.info(f"Deepface 情緒辨識結果 (GPU): {emotion}")
         except Exception as e:
-            logging.error(f"Deepface 情緒辨識失敗: {e}")
+            logging.error(f"Deepface 情緒辨識失敗 (GPU): {e}")
+            # Fallback to CPU if GPU fails
+            try:
+                logging.warning("GPU analysis failed, attempting DeepFace emotion analysis on CPU...")
+                os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # Force CPU
+                demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
+                if demographies and len(demographies) > 0:
+                    emotion = demographies[0]['dominant_emotion']
+                    logging.info(f"Deepface 情緒辨識結果 (CPU): {emotion}")
+            except Exception as cpu_e:
+                logging.error(f"Deepface 情緒辨識失敗 (CPU): {cpu_e}")
+                emotion = "unknown" # Fallback if both fail
 
     return transcribed_text, emotion
 
