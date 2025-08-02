@@ -23,4 +23,4 @@ EXPOSE 8080
 
 # 定義容器啟動時執行的命令
 # 使用 uvicorn 啟動 FastAPI 應用程式
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT:-8080}"]
