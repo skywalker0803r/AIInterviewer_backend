@@ -222,9 +222,11 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
     emotion = "neutral"
 
     # 將音訊資料寫入臨時檔案
+    logging.info(f"Processing audio chunk of size: {len(audio_chunk)} bytes.")
     with tempfile.NamedTemporaryFile(delete=True, suffix=".webm") as tmpfile:
         tmpfile.write(audio_chunk)
         tmpfile_path = tmpfile.name
+        logging.info(f"Audio temporary file path: {tmpfile_path}")
 
         try:
             start_time = time.time()
@@ -235,7 +237,7 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
             logging.info(f"Whisper 轉錄結果: {transcribed_text}")
             logging.info(f"Whisper transcription took {end_time - start_time:.2f} seconds.")
         except Exception as e:
-            logging.error(f"Whisper 語音轉文字失敗: {e}")
+            logging.error(f"Whisper 語音轉文字失敗: {e}. Full error: {e}")
 
     if video_frame_base64:
         try:
@@ -256,17 +258,22 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
 
     return transcribed_text, emotion
 
-async def process_audio_buffer(session_id: str, websocket: WebSocket):
+async def process_audio_buffer(session_id: str, websocket: WebSocket, trigger_reason: str):
     session_data = interview_sessions[session_id]
     audio_buffer = session_data["audio_buffer"]
     
     if not audio_buffer:
+        logging.debug(f"process_audio_buffer called for session {session_id} but buffer is empty.")
         return
+
+    logging.info(f"Processing audio buffer for session {session_id}. Trigger: {trigger_reason}. Buffer size: {len(audio_buffer)} bytes.")
 
     # Clear the buffer immediately to avoid reprocessing
     session_data["audio_buffer"] = b""
     
     user_text, user_emotion = await process_user_input(audio_buffer, session_data["latest_video_frame"])
+
+    logging.info(f"Raw transcribed text from Whisper: '{user_text}'")
 
     if user_text.strip(): # 只有當使用者有說話時才進行處理
         logging.debug(f"User transcribed text: {user_text}")
@@ -393,7 +400,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             except asyncio.TimeoutError:
                 # No message received, process buffer if needed
                 if session_id in interview_sessions and session_data["audio_buffer"] and (time.time() - session_data["last_audio_time"] > 1.0): # Process if buffer has data and no new audio for 1 second
-                    await process_audio_buffer(session_id, websocket)
+                    await process_audio_buffer(session_id, websocket, "timeout")
                 continue # Continue to next loop iteration
 
             logging.debug(f"Received WebSocket message: {message.keys()}")
@@ -405,7 +412,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
                         # Process any remaining audio in buffer before closing
                         if session_data["audio_buffer"]:
-                            await process_audio_buffer(session_id, websocket)
+                            await process_audio_buffer(session_id, websocket, "end_interview_signal")
                         await websocket.close()
                         logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
                         return
@@ -421,7 +428,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
                 # Process buffer immediately if it gets large enough (e.g., 50KB) or after a short delay
                 if len(session_data["audio_buffer"]) > 50 * 1024: # Process if buffer exceeds 50KB
-                    await process_audio_buffer(session_id, websocket)
+                    await process_audio_buffer(session_id, websocket, "buffer_size_limit")
             elif "text" in message: # Handle text messages (e.g., end_interview signal or video_frame)
                 try:
                     json_message = json.loads(message["text"])
@@ -443,7 +450,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         logging.info(f"Client disconnected from WebSocket for session {session_id}")
         # Process any remaining audio in buffer on disconnect
         if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
-            await process_audio_buffer(session_id, websocket)
+            await process_audio_buffer(session_id, websocket, "websocket_disconnect")
         if session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up session on disconnect
             logging.info(f"Session {session_id} cleaned up on disconnect.")
@@ -451,7 +458,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         logging.error(f"WebSocket error for session {session_id}: {e}", exc_info=True) # Log full traceback
         # Process any remaining audio in buffer on error
         if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
-            await process_audio_buffer(session_id, websocket)
+            await process_audio_buffer(session_id, websocket, "websocket_exception")
         if session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up session on error
             logging.info(f"Session {session_id} cleaned up on error.")
