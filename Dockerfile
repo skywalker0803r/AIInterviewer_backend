@@ -19,8 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 暴露 FastAPI 應用程式運行的埠
-EXPOSE 8002
+EXPOSE 8080
 
 # 定義容器啟動時執行的命令
 # 使用 uvicorn 啟動 FastAPI 應用程式
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
