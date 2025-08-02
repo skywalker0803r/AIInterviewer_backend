@@ -1,18 +1,43 @@
-我話還沒講話他就轉錄
-Whisper 轉錄結果: 首先他的这些心率
-INFO:root:Whisper transcription took 24.33 seconds.
-重點是我話還沒講完
-然後之後又跳出一堆
-. Full error: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
-  built with gcc 10 (Debian 10.2.1-6)
-  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
-  libavutil      56. 51.100 / 56. 51.100
-  libavcodec     58. 91.100 / 58. 91.100
-  libavformat    58. 45.100 / 58. 45.100
-  libavdevice    58. 10.100 / 58. 10.100
-  libavfilter     7. 85.100 /  7. 85.100
-  libavresample   4.  0.  0 /  4.  0.  0
-  libswscale      5.  7.100 /  5.  7.100
-  libswresample   3.  7.100 /  3.  7.100
-  libpostproc    55.  7.100 / 55.  7.100
-/tmp/tmpgdp669l5.webm: Invalid data found when processing input
+1.  您會如何選擇、整合並處理來自穿戴裝置的各種生理數據（例如心率、血壓、睡眠模式、步數等）以構建此預測模型？在處理這些敏感且即時變化的健康數據時，您預期會遇到哪些技術挑戰，以及您將如何應對？
+2.  在模型開發過程中，若您發現模型在特定用戶群體（例如，老年人、患有特定慢性病者）的預測準確性顯著偏低，或出現了潛在的演算法偏見，您會如何診斷並深入分析這個問題的根本原因？您將採取哪些技術策略來解決這些偏差， 並提升模型的穩健性、公平性與泛化能力？
+3.  當您需要向非技術背景的同事（如產品經理、市場行銷人員，甚至外部醫療顧問）解釋這個複雜的AI預測模型的原理、局限性及其優化方案時，您將如何有效溝通，確保他們理解並對此系統建立信任？
+4.  在整個開發和持續迭代的過程中，面對數據限制、模型性能瓶頸或快速演進的AI技術趨勢，您將如何保持創新的思維，並展現持續學習與適應的能力，以確保我們的AI解決方案始終保持領先和有效性？
+WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+INFO:     172.19.0.1:39690 - "POST /start_interview HTTP/1.1" 200 OK
+INFO:     172.19.0.1:47110 - "GET /static/audio/f70527e4c0c5477c8bd8fe49117861da.mp3 HTTP/1.1" 206 Partial Content
+INFO:     172.19.0.1:48168 - "WebSocket /ws?session_id=e193a038-d981-4db8-97ea-6fd581014c09" [accepted]
+INFO:     connection open
+INFO:root:Received audio chunk of size: 15618 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16108 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 15795 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16422 bytes
+INFO:root:Received audio chunk of size: 16108 bytes
+
+目前發現變成這樣
+我希望我按下結束說話後
+後端會顯示
+1.收到候選人語音 語音大小
+2.開始轉錄
+3.轉錄成功 轉錄耗時
+4.回傳 前端

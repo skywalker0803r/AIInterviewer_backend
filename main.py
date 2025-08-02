@@ -222,20 +222,20 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
     emotion = "neutral"
 
     # 將音訊資料寫入臨時檔案
-    logging.info(f"Processing audio chunk of size: {len(audio_chunk)} bytes.")
-    with tempfile.NamedTemporaryFile(delete=True, suffix=".webm") as tmpfile:
+    logging.info(f"收到候選人語音 語音大小: {len(audio_chunk)} bytes.")
+    with tempfile.NamedTemporaryFile(delete=True, suffix=".wav") as tmpfile:
         tmpfile.write(audio_chunk)
         tmpfile_path = tmpfile.name
         logging.info(f"Audio temporary file path: {tmpfile_path}")
 
         try:
+            logging.info("開始轉錄...")
             start_time = time.time()
             # 使用 Whisper 進行語音轉文字
             result = whisper_model.transcribe(tmpfile_path, language="zh")
             end_time = time.time()
             transcribed_text = result["text"]
-            logging.info(f"Whisper 轉錄結果: {transcribed_text}")
-            logging.info(f"Whisper transcription took {end_time - start_time:.2f} seconds.")
+            logging.info(f"轉錄成功 轉錄耗時: {end_time - start_time:.2f} seconds. Whisper 轉錄結果: {transcribed_text}")
         except Exception as e:
             logging.error(f"Whisper 語音轉文字失敗: {e}. Full error: {e}")
 
@@ -357,6 +357,7 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket, trigger_re
             audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
 
             await websocket.send_json({"text": gemini_response_text, "audio_url": audio_url})
+            logging.info("回傳前端: AI 回覆內容和音訊 URL")
         else:
             # End of interview
             logging.info("All questions answered. Ending interview.")
@@ -372,6 +373,7 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket, trigger_re
             audio_url = f"{BACKEND_PUBLIC_URL}/static/audio/{audio_filename}"
 
             await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
+            logging.info("回傳前端: 面試結束訊息和音訊 URL")
             logging.debug(f"Sent interview_ended signal for session {session_id}.")
 
 @app.websocket("/ws")
@@ -399,28 +401,12 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
             logging.debug(f"Received WebSocket message: {message.keys()}")
             
-            if "text" in message: # Handle text messages (e.g., end_interview signal)
-                try:
-                    json_message = json.loads(message["text"])
-                    if json_message.get("type") == "end_interview":
-                        logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
-                        # Process any remaining audio in buffer before closing
-                        if session_data["audio_buffer"]:
-                            await process_audio_buffer(session_id, websocket, "end_interview_signal")
-                        await websocket.close()
-                        logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
-                        return
-                except json.JSONDecodeError as e:
-                    logging.warning(f"Received non-JSON text message or invalid JSON: {message['text']}. Error: {e}")
-
-            elif "bytes" in message: # Handle binary messages (audio data)
+            if "bytes" in message: # Handle binary messages (audio data)
                 data = message["bytes"]
                 logging.info(f"Received audio chunk of size: {len(data)} bytes")
 
                 session_data["audio_buffer"] += data
                 session_data["last_audio_time"] = time.time()
-
-                
             elif "text" in message: # Handle text messages (e.g., end_interview signal, video_frame, or end_of_speech)
                 try:
                     json_message = json.loads(message["text"])
