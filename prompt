@@ -1,8 +1,3 @@
-INFO:root:收到候選人臉部截圖
-INFO:root:開始進行臉部辨識 (GPU 模式)...
-I0000 00:00:1754147271.629548     747 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1050 Ti, pci bus id: 0000:01:00.0, compute capability: 6.1
-ERROR:root:Deepface 情緒辨識失敗 (GPU): Failed copying input tensor from /job:localhost/replica:0/task:0/device:CPU:0 to /job:localhost/replica:0/task:0/device:GPU:0 in order to run _EagerConst: Dst tensor is not initialized.
-WARNING:root:GPU analysis failed, attempting DeepFace emotion analysis on CPU...
-ERROR:root:Deepface 情緒辨識失敗 (CPU): Failed copying input tensor from /job:localhost/replica:0/task:0/device:CPU:0 to /job:localhost/replica:0/task:0/device:GPU:0 in order to run _EagerConst: Dst tensor is not initialized.
-把候選人臉部截圖的檔案大小也打印出來吧
-然後看看是什麼原因辨識失敗並改善
+I0000 00:00:1754148069.988123     826 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1050 Ti, pci bus id: 0000:01:00.0, compute capability: 6.1
+WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
+我覺得這兩條訊息可以不用顯示了沒差

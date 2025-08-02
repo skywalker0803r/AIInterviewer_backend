@@ -1,5 +1,5 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # 0 = all messages are logged (default behavior)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # 0 = all messages are logged (default behavior)
                                         # 1 = INFO messages are not printed
                                         # 2 = INFO and WARNING messages are not printed
                                         # 3 = INFO, WARNING, and ERROR messages are not printed
@@ -15,6 +15,7 @@ import json
 import re
 import os
 from gtts import gTTS
+import warnings # Import warnings module
 import uuid
 from dotenv import load_dotenv
 import whisper
@@ -23,6 +24,9 @@ import time # Import time for performance logging
 from deepface import DeepFace # 雖然目前沒有影像串流，但先引入
 import asyncio # Import asyncio for sleep
 import base64 # Import base64 for image decoding
+
+# Suppress gTTS deprecation warning
+warnings.filterwarnings("ignore", message="'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.", category=UserWarning)
 
 #123
 load_dotenv()
