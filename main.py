@@ -431,7 +431,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     evaluation_results = session_data["evaluation_results"]
 
     try:
-        while True:
+        while True: # Revert to while True
             logging.debug("Waiting for data from frontend...")
             message = await websocket.receive() # Wait indefinitely for a message
 
@@ -453,7 +453,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             await process_audio_buffer(session_id, websocket, "end_interview_signal")
                         await websocket.close()
                         logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
-                        return # Exit the loop after closing WebSocket
+                        return # Immediately exit the function
                     elif json_message.get("type") == "video_frame":
                         session_data["latest_video_frame"] = json_message.get("data")
                         logging.debug(f"Received video frame. Size: {len(session_data['latest_video_frame']) if session_data['latest_video_frame'] else 0} bytes")
@@ -480,6 +480,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         if session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up session on error
             logging.info(f"Session {session_id} cleaned up on error.")
+    return # Ensure the function exits after the loop or exception
 
 @app.get("/get_interview_report")
 async def get_interview_report(session_id: str):
