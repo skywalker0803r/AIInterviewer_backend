@@ -395,13 +395,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     try:
         while True:
             logging.debug("Waiting for data from frontend...")
-            try:
-                message = await asyncio.wait_for(websocket.receive(), timeout=0.1) # Short timeout to allow periodic processing
-            except asyncio.TimeoutError:
-                # No message received, process buffer if needed
-                if session_id in interview_sessions and session_data["audio_buffer"] and (time.time() - session_data["last_audio_time"] > 1.0): # Process if buffer has data and no new audio for 1 second
-                    await process_audio_buffer(session_id, websocket, "timeout")
-                continue # Continue to next loop iteration
+            message = await websocket.receive() # Wait indefinitely for a message
 
             logging.debug(f"Received WebSocket message: {message.keys()}")
             
@@ -426,9 +420,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 session_data["audio_buffer"] += data
                 session_data["last_audio_time"] = time.time()
 
-                # Process buffer immediately if it gets large enough (e.g., 50KB) or after a short delay
-                if len(session_data["audio_buffer"]) > 50 * 1024: # Process if buffer exceeds 50KB
-                    await process_audio_buffer(session_id, websocket, "buffer_size_limit")
+                
             elif "text" in message: # Handle text messages (e.g., end_interview signal, video_frame, or end_of_speech)
                 try:
                     json_message = json.loads(message["text"])
