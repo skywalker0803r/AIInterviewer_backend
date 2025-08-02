@@ -133,7 +133,7 @@ async def start_interview(request: Request):
         ]
 
         # Prompt to generate interview questions based on job title, job description and evaluation dimensions
-        question_generation_prompt = f"""你是一位專業的面試官。請根據應徵職位「{job_title}」以及以下職位描述：\n\n{job_description}\n\n設計 5 到 8 個面試問題。這些問題應該能夠評估候選人在以下方面的能力：{', '.join(evaluation_dimensions)}。請以 JSON 格式返回問題列表，每個問題包含 'id' 和 'question' 字段。例如：\n        {{"questions": [{{"id": 1, "question": "請自我介紹。"}}, {{"id": 2, "question": "..."}}]}}\n        """
+        question_generation_prompt = f"""你是一位專業的面試官。請根據應徵職位「{job_title}」以及以下職位描述：\n\n{job_description}\n\n設計 1 到 2 個面試問題。這些問題應該能夠評估候選人在以下方面的能力：{', '.join(evaluation_dimensions)}。請以 JSON 格式返回問題列表，每個問題包含 'id' 和 'question' 字段。例如：\n        {{"questions": [{{"id": 1, "question": "請自我介紹。"}}, {{"id": 2, "question": "..."}}]}}\n        """
 
         payload_questions = {
             "contents": [
