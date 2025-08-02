@@ -303,6 +303,7 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket):
 
             if "candidates" in gemini_evaluation_reply and gemini_evaluation_reply["candidates"]:
                 evaluation_text = gemini_evaluation_reply["candidates"][0]["content"]["parts"][0]["text"]
+                logging.info(f"Gemini 對回答的評語：\n{evaluation_text}") # Add this line to log the AI's thoughts
                 # Extract JSON string from markdown code block
                 json_match = re.search(r"```json\n([\s\S]*?)\n```", evaluation_text)
                 if json_match:
