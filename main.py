@@ -429,20 +429,24 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 # Process buffer immediately if it gets large enough (e.g., 50KB) or after a short delay
                 if len(session_data["audio_buffer"]) > 50 * 1024: # Process if buffer exceeds 50KB
                     await process_audio_buffer(session_id, websocket, "buffer_size_limit")
-            elif "text" in message: # Handle text messages (e.g., end_interview signal or video_frame)
+            elif "text" in message: # Handle text messages (e.g., end_interview signal, video_frame, or end_of_speech)
                 try:
                     json_message = json.loads(message["text"])
                     if json_message.get("type") == "end_interview":
                         logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
                         # Process any remaining audio in buffer before closing
                         if session_data["audio_buffer"]:
-                            await process_audio_buffer(session_id, websocket)
+                            await process_audio_buffer(session_id, websocket, "end_interview_signal")
                         await websocket.close()
                         logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
                         return
                     elif json_message.get("type") == "video_frame":
                         session_data["latest_video_frame"] = json_message.get("data")
                         logging.debug(f"Received video frame. Size: {len(session_data['latest_video_frame']) if session_data['latest_video_frame'] else 0} bytes")
+                    elif json_message.get("type") == "end_of_speech":
+                        logging.info(f"Received end_of_speech signal for session {session_id}. Processing audio buffer.")
+                        if session_data["audio_buffer"]:
+                            await process_audio_buffer(session_id, websocket, "end_of_speech_signal")
                 except json.JSONDecodeError as e:
                     logging.warning(f"Received non-JSON text message or invalid JSON: {message['text']}. Error: {e}")
 

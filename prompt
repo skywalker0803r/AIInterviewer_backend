@@ -1,86 +1,29 @@
-INFO:root:Generated interview questions count: 2
-INFO:root:Gemini 回覆內容：「AI模型的訓練、微調、效能優化及部署」是本職位的重要環節。請您描述一個您曾經手過、在模型部署後遇到『模型推論延遲過高』或『預測效能不如預期』的專案。您是如何系統性地分析問題的根本原因（無論是資料、模型本身、或是部署環境的問題）？您採取了哪些具體的技術策略來解決這些問題（例如，模型壓縮、推論優化、資料管線瓶頸排除等）？最終的成果如何？如果您的初步嘗試未能完全解決問題，您會如何調整策略或尋找 創新的解決方案？
-
-（此問題旨在評估：技術深度、解決問題能力、抗壓能力、創新思維、學習能力）
+INFO:root:評分結果：{'技術深度': 1, '領導能力': 1, '溝通能力': 1, '抗壓能力': 1, '解決問題能力': 1, '學習能力': 1, '團隊合作': 1, '創新思維': 1}
+INFO:root:Gemini 回覆內容：國泰金控正積極拓展東南亞市場的數位金融服務。作為【海外通路】數據技術專案管理師，您可能會面對來自不同國家、文化背景的團隊成員與利害關係人，以及多樣的當地法規與市場特性。請分享您會如何準備並執行一個在海外市場導入數據或AI專案？在面對跨文化溝通、潛在法規差異及快速變化的市場環境時，您會採取哪些策略來確保專案的順利推進與成功落地？
 WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
-INFO:     172.19.0.1:37750 - "POST /start_interview HTTP/1.1" 200 OK
-INFO:     172.19.0.1:54444 - "GET /static/audio/f8998f7a9dd345688ccbc62806372639.mp3 HTTP/1.1" 206 Partial Content
-INFO:     172.19.0.1:54460 - "WebSocket /ws?session_id=8755cb41-fb1d-4013-a670-25e0dc5e9974" [accepted]
-INFO:     connection open
-INFO:root:Received audio chunk of size: 16584 bytes
+INFO:     172.19.0.1:49890 - "GET /static/audio/5e515dd16b6d48059cb848cc187f3ff8.mp3 HTTP/1.1" 206 Partial Content
+INFO:root:Received audio chunk of size: 15618 bytes
 INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Whisper 轉錄結果: 首先,它的準確度不夠
-INFO:root:Whisper transcription took 27.50 seconds.
+INFO:root:Processing audio buffer for session c68551c4-9b13-4c13-913d-0e6383354041. Trigger: timeout. Buffer size: 32040 bytes.
+INFO:root:Processing audio chunk of size: 32040 bytes.
+INFO:root:Audio temporary file path: /tmp/tmp4rakppsj.webm
+INFO:root:Whisper 轉錄結果: 我会先去看
+INFO:root:Whisper transcription took 24.12 seconds.
+INFO:root:Raw transcribed text from Whisper: '我会先去看'
 INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBMABo3DwiB7bzOLpwu3aqEVhUeJvgO7Zc "HTTP/1.1 200 OK"
 INFO:root:Gemini 對回答的評語：
-內心的想法：
-
-這是一個極其簡短且空泛的回答，幾乎完全未能觸及問題的核心。問題要求候選人描述一個「模型部署後」遇到「推論延遲過高」或「預測效能不如預期」的專案，並深入探討「系統性分析問題根源」、「具體技術策略」及「最終成果」 ，甚至還問及「創新解決方案」。
-
-候選人僅僅說了：「首先，它的準確度不夠。」
-
-這句話存在以下幾個嚴重的問題：
-
-1.  **缺乏情境與細節：** 沒有提到是哪個專案，是什麼模型，在什麼階段發現準確度不夠（是在訓練驗證階段還是部署後才發現），以及這與「推論延遲過高」或「預測效能不如預期」（這個不如預期包含但不限於準確度）的關聯性。
-2.  **未能展示系統性分析能力：** 問題明確要求分析根源（資料、模型本身、部署環境），但回答完全沒有提供任何分析。
-3.  **未提供任何技術策略：** 問題詳細列舉了模型壓縮、推論優化、資料管線瓶頸排除等策略，候選人一個都沒提到。
-4.  **沒有成果或反思：** 沒有說明如何解決這個「準確度不夠」的問題，更談不上「如果初步嘗試未能完全解決，會如何調整策略或尋找創新解決方案」。
-5.  **溝通效率極低：** 對於一個如此具體且重要的問題，如此簡短的回答顯示出極低的溝通效率，甚至令人懷疑其是否有相關經驗，或是否有能力將經驗清晰地表達出來。
-
-綜合來看，這個回答幾乎沒有提供任何可供評估的資訊。面部情緒的「neutral」可能表示候選人沒有感到壓力，但也可能是因為缺乏內容而無法表達。這讓我覺得需要花費大量時間進行追問，才能嘗試從中挖掘出一些東西。
-
----
-
-評分結果：
-
-```json
 {
-  "技術深度": 1,
-  "領導能力": 1,
-  "溝通能力": 1,
-  "抗壓能力": 2,
-  "解決問題能力": 1,
-  "學習能力": 1,
-  "團隊合作": 1,
-  "創新思維": 1
+    "技術深度": 1,
+    "領導能力": 1,
+    "溝通能力": 1,
+    "抗壓能力": 2,
+    "解決問題能力": 1,
+    "學習能力": 2,
+    "團隊合作": 1,
+    "創新思維": 1
 }
-```
-INFO:root:Extracted JSON string for evaluation: {
-  "技術深度": 1,
-  "領導能力": 1,
-  "溝通能力": 1,
-  "抗壓能力": 2,
-  "解決問題能力": 1,
-  "學習能力": 1,
-  "團隊合作": 1,
-  "創新思維": 1
-}
-INFO:root:評分結果：{'技術深度': 1, '領導能力': 1, '溝通能力': 1, '抗壓能力': 2, '解決問題能力': 1, '學習能力': 1, '團隊合作': 1, '創新思維': 1}
-INFO:root:Gemini 回覆內容：除了模型本身，職位描述中也強調了「資料工程」的重要性，包括資料爬取、前處理及設計高效演算法以支援模型訓練與推論。請分享一個您曾與跨職能團隊（例如：資料科學家、軟體工程師、產品經理）合作，從資料獲取、清洗到最終應用於模型訓練與部署的專案。您在其中扮演了什麼角色？過程中遇到的最大挑戰是什麼（例如：資料品質、團隊溝通、技術整合）？您是如何協調各方意見、推動專案進展，並確保資料管線的效率與可靠性 ？最終該專案如何影響了產品或業務成果？
 
-（此問題旨在評估：溝通能力、團隊合作、領導能力、解決問題能力、技術深度）
-WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-ERROR:root:Whisper 語音轉文字失敗: Failed to load audio: ffmpeg version 4.3.9-0+deb11u1 Copyright (c) 2000-2025 the FFmpeg developers
-  built with gcc 10 (Debian 10.2.1-6)
-  configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-shared
-  libavutil      56. 51.100 / 56. 51.100
-  libavcodec     58. 91.100 / 58. 91.100
-  libavformat    58. 45.100 / 58. 45.100
-  libavdevice    58. 10.100 / 58. 10.100
-  libavfilter     7. 85.100 /  7. 85.100
-  libavresample   4.  0.  0 /  4.  0.  0
-  libswscale      5.  7.100 /  5.  7.100
-  libswresample   3.  7.100 /  3.  7.100
-  libpostproc    55.  7.100 / 55.  7.100
-/tmp/tmpg3qrs_cq.webm: Invalid data found when processing input
+目前的問題是常常我聽完面試官講話 按下開始說話按鈕 回答了一長串 按下結束說話
+發現Whisper 轉錄結果只有我開頭說的一部分 後面都沒轉錄
+請先檢查程式碼 到底哪裡的邏輯可能導致我說的情況
 
-
-這是後端log檔 我在前端回覆AI面試官的問題 我還沒講話他就用Whisper 轉錄結果 根本就只有截取到片段
-然後面試官就用這片段給我低分 之後又莫名其妙出現很多Whisper 語音轉文字失敗
-請先不要改程式碼 先研究原因  或是你要加上log來追原因也可以
