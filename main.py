@@ -449,7 +449,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             await process_audio_buffer(session_id, websocket, "end_interview_signal")
                         await websocket.close()
                         logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
-                        return
+                        return # Exit the loop after closing WebSocket
                     elif json_message.get("type") == "video_frame":
                         session_data["latest_video_frame"] = json_message.get("data")
                         logging.debug(f"Received video frame. Size: {len(session_data['latest_video_frame']) if session_data['latest_video_frame'] else 0} bytes")
