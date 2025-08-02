@@ -1,3 +1,9 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # 0 = all messages are logged (default behavior)
+                                        # 1 = INFO messages are not printed
+                                        # 2 = INFO and WARNING messages are not printed
+                                        # 3 = INFO, WARNING, and ERROR messages are not printed
+
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -403,7 +409,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             
             if "bytes" in message: # Handle binary messages (audio data)
                 data = message["bytes"]
-                logging.info(f"Received audio chunk of size: {len(data)} bytes")
+                logging.debug(f"Received audio chunk of size: {len(data)} bytes")
 
                 session_data["audio_buffer"] += data
                 session_data["last_audio_time"] = time.time()

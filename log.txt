@@ -1,43 +1,19 @@
-1.  您會如何選擇、整合並處理來自穿戴裝置的各種生理數據（例如心率、血壓、睡眠模式、步數等）以構建此預測模型？在處理這些敏感且即時變化的健康數據時，您預期會遇到哪些技術挑戰，以及您將如何應對？
-2.  在模型開發過程中，若您發現模型在特定用戶群體（例如，老年人、患有特定慢性病者）的預測準確性顯著偏低，或出現了潛在的演算法偏見，您會如何診斷並深入分析這個問題的根本原因？您將採取哪些技術策略來解決這些偏差， 並提升模型的穩健性、公平性與泛化能力？
-3.  當您需要向非技術背景的同事（如產品經理、市場行銷人員，甚至外部醫療顧問）解釋這個複雜的AI預測模型的原理、局限性及其優化方案時，您將如何有效溝通，確保他們理解並對此系統建立信任？
-4.  在整個開發和持續迭代的過程中，面對數據限制、模型性能瓶頸或快速演進的AI技術趨勢，您將如何保持創新的思維，並展現持續學習與適應的能力，以確保我們的AI解決方案始終保持領先和有效性？
-WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
-INFO:     172.19.0.1:39690 - "POST /start_interview HTTP/1.1" 200 OK
-INFO:     172.19.0.1:47110 - "GET /static/audio/f70527e4c0c5477c8bd8fe49117861da.mp3 HTTP/1.1" 206 Partial Content
-INFO:     172.19.0.1:48168 - "WebSocket /ws?session_id=e193a038-d981-4db8-97ea-6fd581014c09" [accepted]
-INFO:     connection open
-INFO:root:Received audio chunk of size: 15618 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16108 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 15795 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16422 bytes
-INFO:root:Received audio chunk of size: 16108 bytes
-
-目前發現變成這樣
-我希望我按下結束說話後
-後端會顯示
-1.收到候選人語音 語音大小
-2.開始轉錄
-3.轉錄成功 轉錄耗時
-4.回傳 前端
+2025-08-02 14:42:46.458831: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1065] Bin (16777216):       Total Chunks: 0, Chunks in use: 0. 0B allocated for chunks. 0B in use in bin. 0B client-requested in use in bin.
+2025-08-02 14:42:46.458841: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1065] Bin (33554432):       Total Chunks: 0, Chunks in use: 0. 0B allocated for chunks. 0B in use in bin. 0B client-requested in use in bin.
+2025-08-02 14:42:46.458851: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1065] Bin (67108864):       Total Chunks: 0, Chunks in use: 0. 0B allocated for chunks. 0B in use in bin. 0B client-requested in use in bin.
+2025-08-02 14:42:46.458861: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1065] Bin (134217728):      Total Chunks: 0, Chunks in use: 0. 0B allocated for chunks. 0B in use in bin. 0B client-requested in use in bin.
+2025-08-02 14:42:46.458871: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1065] Bin (268435456):      Total Chunks: 0, Chunks in use: 0. 0B allocated for chunks. 0B in use in bin. 0B client-requested in use in bin.
+2025-08-02 14:42:46.458881: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1081] Bin for 256B was 256B, Chunk State:
+2025-08-02 14:42:46.458890: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1119]      Summary of in-use Chunks by size:
+2025-08-02 14:42:46.458899: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1126] Sum Total of in-use chunks: 0B
+2025-08-02 14:42:46.458909: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1128] Total bytes in pool: 0 memory_limit_: 0 available bytes: 0 curr_region_allocation_bytes_: 0
+2025-08-02 14:42:46.458924: I external/local_xla/xla/tsl/framework/bfc_allocator.cc:1133] Stats:
+Limit:                               0
+InUse:                               0
+MaxInUse:                            0
+NumAllocs:                           0
+MaxAllocSize:                        0
+Reserved:                            0
+PeakReserved:                        0
+LargestFreeBlock:                    0
+再來就是剛剛跑出這些東西我看不懂
