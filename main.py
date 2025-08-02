@@ -260,10 +260,10 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
         import tensorflow as tf # Import tensorflow here to ensure it's loaded when needed
         img_tmpfile = None # Initialize to None
         try:
-            logging.info("收到候選人臉部截圖")
             # Decode base64 image data
             header, encoded = video_frame_base64.split(",", 1)
             image_bytes = base64.b64decode(encoded)
+            logging.info(f"收到候選人臉部截圖，大小: {len(image_bytes)} bytes")
 
             # 將影像資料寫入臨時檔案
             img_tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") # Set delete=False
@@ -271,30 +271,19 @@ async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None)
             img_tmpfile_path = img_tmpfile.name
             img_tmpfile.close() # Close the file handle so DeepFace can access it
 
-            logging.info("開始進行臉部辨識 (GPU 模式)...")
-            start_time_deepface = time.time()
-            demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
-            end_time_deepface = time.time()
-            logging.info(f"臉部辨識完成 耗時: {end_time_deepface - start_time_deepface:.2f} seconds.")
-            if demographies and len(demographies) > 0:
-                emotion = demographies[0]['dominant_emotion']
-                logging.info(f"Deepface 情緒辨識結果 (GPU): {emotion}")
-        except Exception as e:
-            logging.error(f"Deepface 情緒辨識失敗 (GPU): {e}")
-            # Fallback to CPU if GPU fails
-            try:
-                logging.warning("GPU analysis failed, attempting DeepFace emotion analysis on CPU...")
-                os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # Force CPU
+            # Force TensorFlow to use CPU for DeepFace analysis
+            with tf.device('/CPU:0'):
+                logging.info("開始進行臉部辨識 (CPU 模式)...")
                 start_time_deepface = time.time()
-                demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
+                demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False, detector_backend='opencv')
                 end_time_deepface = time.time()
                 logging.info(f"臉部辨識完成 耗時: {end_time_deepface - start_time_deepface:.2f} seconds.")
                 if demographies and len(demographies) > 0:
                     emotion = demographies[0]['dominant_emotion']
                     logging.info(f"Deepface 情緒辨識結果 (CPU): {emotion}")
-            except Exception as cpu_e:
-                logging.error(f"Deepface 情緒辨識失敗 (CPU): {cpu_e}")
-                emotion = "unknown" # Fallback if both fail
+        except Exception as e:
+            logging.error(f"Deepface 情緒辨識失敗: {e}")
+            emotion = "unknown" # Fallback if both fail
         finally:
             if img_tmpfile and os.path.exists(img_tmpfile_path):
                 os.unlink(img_tmpfile_path) # Manually delete the temporary file
