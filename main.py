@@ -16,6 +16,7 @@ import tempfile
 import time # Import time for performance logging
 from deepface import DeepFace # 雖然目前沒有影像串流，但先引入
 import asyncio # Import asyncio for sleep
+import base64 # Import base64 for image decoding
 
 #123
 load_dotenv()
@@ -189,7 +190,8 @@ async def start_interview(request: Request):
                 "evaluation_dimensions": evaluation_dimensions,
                 "evaluation_results": {dim: [] for dim in evaluation_dimensions},
                 "audio_buffer": b"", # New: Buffer for incoming audio chunks
-                "last_audio_time": time.time() # New: Timestamp of last audio chunk
+                "last_audio_time": time.time(), # New: Timestamp of last audio chunk
+                "latest_video_frame": None # New: To store the latest video frame (base64 string)
             }
 
             # Get the first question
@@ -215,7 +217,7 @@ async def start_interview(request: Request):
         logging.exception("處理 /start_interview 發生錯誤")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-async def process_user_input(audio_chunk: bytes, video_frame: bytes = None):
+async def process_user_input(audio_chunk: bytes, video_frame_base64: str = None):
     transcribed_text = ""
     emotion = "neutral"
 
@@ -235,19 +237,22 @@ async def process_user_input(audio_chunk: bytes, video_frame: bytes = None):
         except Exception as e:
             logging.error(f"Whisper 語音轉文字失敗: {e}")
 
-    # TODO: Implement Deepface emotion recognition here if video_frame is provided
-    # if video_frame:
-    #     try:
-    #         # 將影像資料寫入臨時檔案
-    #         with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as img_tmpfile:
-    #             img_tmpfile.write(video_frame)
-    #             img_tmpfile_path = img_tmpfile.name
-    #             demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
-    #             if demographies and len(demographies) > 0:
-    #                 emotion = demographies[0]['dominant_emotion']
-    #                 logging.info(f"Deepface 情緒辨識結果: {emotion}")
-    #     except Exception as e:
-    #         logging.error(f"Deepface 情緒辨識失敗: {e}")
+    if video_frame_base64:
+        try:
+            # Decode base64 image data
+            header, encoded = video_frame_base64.split(",", 1)
+            image_bytes = base64.b64decode(encoded)
+
+            # 將影像資料寫入臨時檔案
+            with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as img_tmpfile:
+                img_tmpfile.write(image_bytes)
+                img_tmpfile_path = img_tmpfile.name
+                demographies = DeepFace.analyze(img_tmpfile_path, actions=['emotion'], enforce_detection=False)
+                if demographies and len(demographies) > 0:
+                    emotion = demographies[0]['dominant_emotion']
+                    logging.info(f"Deepface 情緒辨識結果: {emotion}")
+        except Exception as e:
+            logging.error(f"Deepface 情緒辨識失敗: {e}")
 
     return transcribed_text, emotion
 
@@ -261,7 +266,7 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket):
     # Clear the buffer immediately to avoid reprocessing
     session_data["audio_buffer"] = b""
     
-    user_text, user_emotion = await process_user_input(audio_buffer)
+    user_text, user_emotion = await process_user_input(audio_buffer, session_data["latest_video_frame"])
 
     if user_text.strip(): # 只有當使用者有說話時才進行處理
         logging.debug(f"User transcribed text: {user_text}")
@@ -284,7 +289,8 @@ async def process_audio_buffer(session_id: str, websocket: WebSocket):
 
         evaluation_prompt = f"""你是一位專業的面試官，正在評估應徵「{job_title}」職位的候選人。候選人剛才回答了你的問題：「{current_question_text}」。
         候選人的回答是：「{user_text}」。
-        請你根據候選人的回答，對其在以下 8 個維度的表現進行 1 到 5 分的評分（1分最低，5分最高）。
+        根據面部情緒分析，候選人當前的情緒是：「{user_emotion}」。
+        請你根據候選人的回答和面部情緒，對其在以下 8 個維度的表現進行 1 到 5 分的評分（1分最低，5分最高）。
         評分維度：{', '.join(evaluation_dimensions)}
         請以 JSON 格式返回評分結果，例如：
         {{"技術深度": 4, "領導能力": 3, "溝通能力": 5, "抗壓能力": 4, "解決問題能力": 4, "學習能力": 4, "團隊合作": 5, "創新思維": 4}}
@@ -416,8 +422,22 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 # Process buffer immediately if it gets large enough (e.g., 50KB) or after a short delay
                 if len(session_data["audio_buffer"]) > 50 * 1024: # Process if buffer exceeds 50KB
                     await process_audio_buffer(session_id, websocket)
-            else:
-                logging.warning(f"Received unknown WebSocket message type: {message}")
+            elif "text" in message: # Handle text messages (e.g., end_interview signal or video_frame)
+                try:
+                    json_message = json.loads(message["text"])
+                    if json_message.get("type") == "end_interview":
+                        logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
+                        # Process any remaining audio in buffer before closing
+                        if session_data["audio_buffer"]:
+                            await process_audio_buffer(session_id, websocket)
+                        await websocket.close()
+                        logging.info(f"WebSocket closed for session {session_id} after end_interview signal.")
+                        return
+                    elif json_message.get("type") == "video_frame":
+                        session_data["latest_video_frame"] = json_message.get("data")
+                        logging.debug(f"Received video frame. Size: {len(session_data['latest_video_frame']) if session_data['latest_video_frame'] else 0} bytes")
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Received non-JSON text message or invalid JSON: {message['text']}. Error: {e}")
 
     except WebSocketDisconnect:
         logging.info(f"Client disconnected from WebSocket for session {session_id}")
