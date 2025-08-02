@@ -38,6 +38,8 @@ logging.basicConfig(level=logging.INFO) # Change to INFO for less verbose loggin
 
 app = FastAPI()
 # 提供靜態檔案（TTS 音訊）
+# 確保 static 資料夾存在
+os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 允許前端跨域請求
