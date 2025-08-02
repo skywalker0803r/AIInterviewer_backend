@@ -468,20 +468,22 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
     except WebSocketDisconnect:
         logging.info(f"Client disconnected from WebSocket for session {session_id}")
-        # Process any remaining audio in buffer on disconnect
-        if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
-            await process_audio_buffer(session_id, websocket, "websocket_disconnect")
         if session_id in interview_sessions:
-            del interview_sessions[session_id] # Clean up session on disconnect
-            logging.info(f"Session {session_id} cleaned up on disconnect.")
+            session_data = interview_sessions[session_id]
+            if not session_data.get("interview_completed", False): # Only clean up if interview not completed
+                del interview_sessions[session_id]
+                logging.info(f"Session {session_id} cleaned up on disconnect (interview not completed).")
+            else:
+                logging.info(f"Session {session_id} not cleaned up on disconnect as interview was completed.")
     except Exception as e:
         logging.error(f"WebSocket error for session {session_id}: {e}", exc_info=True) # Log full traceback
-        # Process any remaining audio in buffer on error
-        if session_id in interview_sessions and interview_sessions[session_id]["audio_buffer"]:
-            await process_audio_buffer(session_id, websocket, "websocket_exception")
         if session_id in interview_sessions:
-            del interview_sessions[session_id] # Clean up session on error
-            logging.info(f"Session {session_id} cleaned up on error.")
+            session_data = interview_sessions[session_id]
+            if not session_data.get("interview_completed", False): # Only clean up if interview not completed
+                del interview_sessions[session_id]
+                logging.info(f"Session {session_id} cleaned up on error (interview not completed).")
+            else:
+                logging.info(f"Session {session_id} not cleaned up on error as interview was completed.")
     return # Ensure the function exits after the loop or exception
 
 @app.get("/get_interview_report")
