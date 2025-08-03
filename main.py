@@ -139,7 +139,7 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
 
     try:
         # 1. Process the user's spoken answer
-        user_text = await manager.process_user_answer(session_id, audio_file)
+        user_text = await manager.process_user_answer(session_id, audio_file, image_data)
         
         # 2. Get the next question from the AI
         next_question_data = await manager.get_next_question(session_id)
