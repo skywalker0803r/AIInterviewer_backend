@@ -9,3 +9,4 @@ deepface
 tensorflow
 tf_keras
 google-cloud-storage
+python-multipart

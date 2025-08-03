@@ -1,3 +1,39 @@
-I0000 00:00:1754148069.988123     826 gpu_device.cc:2019] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1050 Ti, pci bus id: 0000:01:00.0, compute capability: 6.1
-WARNING:gtts.lang:'zh-TW' has been deprecated, falling back to 'zh-TW'. This fallback will be removed in a future version.
-我覺得這兩條訊息可以不用顯示了沒差
+✦ 好的，請將這段話交給我的繼任者：
+
+  ---
+
+  交接說明
+
+  你好，我們剛剛完成了一次重大的架構重構，目的是解決使用者回報的「面試中途連線中斷」問題。
+
+  核心問題：
+  原先的應用程式使用 WebSocket (/ws) 進行前後端通訊，這種長連線在不穩定的網路環境或特定的託管平台（如
+  Render）上容易因超時而中斷。
+
+  已執行的解決方案：
+  我們已將整個通訊架構從 WebSocket 遷移至更穩健的、基於 HTTP 請求/回應的無狀態 (Stateless) 模式。
+
+  主要變更檔案：
+   1. AIInterviewer_backend/main.py:
+       * 移除了 /ws 端點和所有 WebSocket 相關邏輯。
+       * 引入了以 session_id 為鍵的全域字典 interview_sessions 來管理面試狀態，使其能安全地處理多個並行請求。
+       * 建立了新的 HTTP 端點來控制面試流程。
+
+   2. AIInterviewer_backend/interview_manager.py:
+       * 重構了 InterviewManager 類別，使其不再管理全域 session，而是專注於處理單次面試的內部邏輯。
+       * 移除了所有對 WebSocket 的依賴。
+
+   3. AIInterviewer_frontend/script.js:
+       * 完全移除了 WebSocket、心跳 (heartbeat) 機制和相關的複雜狀態管理。
+       * 重構了所有事件處理器，改為呼叫新的後端 HTTP API。
+
+  當前狀態與後續步驟：
+  所有程式碼修改均已完成。
+
+  你的首要任務是指導使用者完成以下步驟：
+   1. 重啟後端伺服器以載入新的程式碼。
+   2. 協助使用者進行完整的端對端測試，驗證新的 HTTP 架構是否正常運作且已解決連線中斷問題。
+   3. 如果在測試中出現任何錯誤，請檢查瀏覽器開發者工具的控制台 (Console)
+      和後端伺服器的日誌，以協助使用者進行偵錯。
+
+  祝順利！
