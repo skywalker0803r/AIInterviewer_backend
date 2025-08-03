@@ -86,7 +86,12 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             elif "text" in message:
                 try:
                     json_message = json.loads(message["text"])
-                    if json_message.get("type") == "end_interview":
+                    if json_message.get("type") == "ping":
+                        # Respond to ping to keep connection alive, no further processing needed
+                        # await websocket.send_json({"type": "pong"}) # Optionally send pong back
+                        logging.debug(f"Received ping from client for session {session_id}.")
+                        continue # Skip further processing for ping messages
+                    elif json_message.get("type") == "end_interview":
                         logging.info(f"Received end_interview signal for session {session_id}. Closing WebSocket.")
                         await interview_manager.process_user_audio_and_video(session_id, websocket) # Process any remaining audio
                         await websocket.close()
