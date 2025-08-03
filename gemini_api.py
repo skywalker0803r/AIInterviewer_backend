@@ -29,7 +29,10 @@ def extract_json_from_gemini_response(gemini_reply: dict) -> str:
     import re
     json_match = re.search(r"```json\n([\s\S]*?)\n```", response_text)
     if json_match:
-        return json_match.group(1)
+        extracted_json = json_match.group(1)
+        # 移除所有無效的控制字元，確保 JSON 能夠被解析
+        cleaned_json = re.sub(r'[\x00-\x1F]', '', extracted_json)
+        return cleaned_json
     else:
         return response_text # Fallback if no markdown block
 
