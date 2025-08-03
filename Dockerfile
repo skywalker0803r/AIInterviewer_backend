@@ -13,7 +13,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     ffmpeg     libsm6     
 
 # 將 requirements.txt 複製到工作目錄並安裝 Python 依賴
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 # 將整個 backend 目錄複製到容器中
 COPY . .
