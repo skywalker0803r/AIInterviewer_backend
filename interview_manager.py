@@ -1,230 +1,167 @@
-import json
 import logging
-import uuid
-import time
-import asyncio
-from typing import Dict, Any
+import json
+from typing import Dict, Any, List
+from fastapi import UploadFile
 
-from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS, GCS_BUCKET_NAME
+from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS
 from gemini_api import call_gemini_api, extract_json_from_gemini_response
 from speech_to_text import transcribe_audio
-from emotion_analysis import analyze_emotion
 from text_to_speech import generate_and_upload_audio
-
-interview_sessions: Dict[str, Dict[str, Any]] = {}
+# from emotion_analysis import analyze_emotion # Temporarily disable for simplification
 
 class InterviewManager:
+    """
+    Manages the state and logic for a single interview session.
+    This class is now stateless regarding session management; session persistence
+    is handled by the caller (e.g., in main.py).
+    """
     def __init__(self):
-        pass
+        # Instance variables are initialized here
+        self.job_title: str = ""
+        self.session_id: str = ""
+        self.conversation_history: List[Dict[str, Any]] = []
+        self.interview_questions: List[Dict[str, Any]] = []
+        self.current_question_index: int = 0
+        self.evaluation_results: Dict[str, List[float]] = {dim: [] for dim in EVALUATION_DIMENSIONS}
+        self.interview_completed: bool = False
 
-    async def start_new_interview(self, job_title: str, job_description: str) -> Dict[str, Any]:
-        session_id = str(uuid.uuid4())
-        interview_questions = await self._generate_interview_questions(job_title, job_description)
-
-        interview_sessions[session_id] = {
-            "job_title": job_title,
-            "conversation_history": [],
-            "interview_questions": interview_questions,
-            "current_question_index": 0,
-            "evaluation_dimensions": EVALUATION_DIMENSIONS,
-            "evaluation_results": {dim: [] for dim in EVALUATION_DIMENSIONS},
-            "audio_buffer": b"",
-            "last_audio_time": time.time(),
-            "latest_video_frame": None,
-            "interview_completed": False
-        }
-
-        first_question = interview_questions[0]["question"]
-        interview_sessions[session_id]["conversation_history"].append({"role": "model", "parts": [{"text": first_question}]})
-
-        audio_url = await generate_and_upload_audio(first_question)
-
-        return {
-            "text": first_question,
-            "audio_url": audio_url,
-            "session_id": session_id,
-            "total_questions": len(interview_questions)
-        }
-
-    async def _generate_interview_questions(self, job_title: str, job_description: str) -> list:
-        question_generation_prompt = f"""你是一位專業的面試官。請根據應徵職位「{job_title}」以及以下職位描述：\n\n{job_description}\n\n設計 5 到 8 個面試問題。這些問題應該能夠評估候選人在以下方面的能力：{', '.join(EVALUATION_DIMENSIONS)}。請以 JSON 格式返回問題列表，每個問題包含 'id' 和 'question' 字段。例如：\n        {{"questions": [{{"id": 1, "question": "請自我介紹。"}}, {{"id": 2, "question": "..."}}]}}\n        """
-
-        payload_questions = {
-            "contents": [
-                {"parts": [{"text": question_generation_prompt}]}
-            ]
-        }
-
-        try:
-            gemini_questions_reply = await call_gemini_api(GEMINI_API_KEY, payload_questions)
-            logging.info(f"Gemini Questions API 回應：{json.dumps(gemini_questions_reply, ensure_ascii=False, indent=2)}")
-            extracted_json_string = extract_json_from_gemini_response(gemini_questions_reply)
-            questions_data = json.loads(extracted_json_string)
-            interview_questions = questions_data.get("questions", [])
-            logging.info(f"Generated interview questions count: {len(interview_questions)}")
-            if not interview_questions:
-                raise ValueError("Gemini generated an empty list of questions.")
-            return interview_questions
-        except (ValueError, json.JSONDecodeError) as e:
-            logging.error(f"Failed to generate questions from Gemini or parse its response: {e}")
-            # Fallback questions
-            return [
-                {"id": 1, "question": f"您好，歡迎您！我是今天的面試官。很高興您能來參加我們「{job_title}」職位的第一輪面試。首先，請您簡單介紹一下自己，並請您特別分享一下，您過去的經驗或專業背景，有哪些方面是您認為與我們『{job_title}』這個職位高度相關的？以及是什麼原因讓您對這個職位特別感興趣？"},
-                {"id": 2, "question": "您認為自己最大的優點和缺點是什麼？這些特質如何影響您的工作？"},
-                {"id": 3, "question": "在您過去的工作經驗中，有沒有遇到過什麼挑戰？您是如何克服這些挑戰的？"},
-                {"id": 4, "question": "您對我們公司或這個職位有什麼了解？為什麼選擇我們公司？"},
-                {"id": 5, "question": "您對未來的職業發展有什麼規劃？"}
-            ]
-
-    async def process_user_audio_and_video(self, session_id: str, websocket):
-        session_data = interview_sessions.get(session_id)
-        if not session_data:
-            logging.error(f"Session ID {session_id} not found for audio processing.")
-            return
-
-        audio_buffer = session_data["audio_buffer"]
-        if not audio_buffer:
-            logging.debug(f"process_user_audio_and_video called for session {session_id} but buffer is empty.")
-            return
-
-        logging.info(f"Processing audio buffer for session {session_id}. Buffer size: {len(audio_buffer)} bytes.")
-
-        session_data["audio_buffer"] = b""
-        
-        user_text = await transcribe_audio(audio_buffer)
-        user_emotion = await analyze_emotion(session_data["latest_video_frame"])
-
-        logging.info(f"Raw transcribed text from Whisper: '{user_text}'")
-
-        if user_text.strip():
-            logging.debug(f"User transcribed text: {user_text}")
-            await websocket.send_json({"speaker": "你", "text": user_text})
-            session_data["conversation_history"].append({"role": "user", "parts": [{"text": user_text}]})
-
-            await self._evaluate_and_respond(session_id, user_text, user_emotion, websocket)
-
-    async def _evaluate_and_respond(self, session_id: str, user_text: str, user_emotion: str, websocket):
-        session_data = interview_sessions[session_id]
-        current_question_index = session_data["current_question_index"]
-        interview_questions = session_data["interview_questions"]
-        evaluation_dimensions = session_data["evaluation_dimensions"]
-        evaluation_results = session_data["evaluation_results"]
-        job_title = session_data["job_title"]
-
-        current_question_obj = interview_questions[current_question_index]
-        current_question_text = current_question_obj["question"]
-
-        evaluation_prompt = f"""你是一位專業的面試官，正在評估應徵「{job_title}」職位的候選人。候選人剛才回答了你的問題：「{current_question_text}」。
-        候選人的回答是：「{user_text}」。
-        根據面部情緒分析，候選人當前的情緒是：「{user_emotion}」。
-        請你根據候選人的回答和面部情緒，對其在以下 {len(evaluation_dimensions)} 個維度的表現進行 1 到 5 分的評分（1分最低，5分最高）。
-        評分維度：{', '.join(evaluation_dimensions)}
-        請以 JSON 格式返回評分結果，例如：
-        {{"技術深度": 4, "領導能力": 3, "溝通能力": 5, "抗壓能力": 4, "解決問題能力": 4, "學習能力": 4, "團隊合作": 5, "創新思維": 4}}
-        以及你內心的想法
+    async def start_new_interview(self, job_title: str, job_description: str, session_id: str) -> Dict[str, Any]:
         """
+        Initializes the interview by generating questions and preparing the first one.
+        """
+        self.job_title = job_title
+        self.session_id = session_id
+        logging.info(f"[{self.session_id}] Generating interview questions for '{self.job_title}'.")
+
+        self.interview_questions = await self._generate_interview_questions(job_title, job_description)
         
-        payload_evaluation = {
-            "contents": [
-                {"parts": [{"text": evaluation_prompt}]}
-            ]
+        if not self.interview_questions:
+            raise ValueError("Failed to generate or retrieve fallback interview questions.")
+
+        # Prepare the first question
+        first_question_text = self.interview_questions[0]["question"]
+        self.conversation_history.append({"role": "model", "parts": [{"text": first_question_text}]})
+        
+        audio_url = await generate_and_upload_audio(first_question_text, self.session_id)
+        
+        logging.info(f"[{self.session_id}] First question is ready.")
+        return {
+            "text": first_question_text,
+            "audio_url": audio_url,
+            "total_questions": len(self.interview_questions)
         }
 
-        logging.debug("Calling Gemini API for evaluation...")
-        gemini_evaluation_reply = await call_gemini_api(GEMINI_API_KEY, payload_evaluation)
-        logging.debug(f"Gemini Evaluation API raw response: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
+    async def process_user_answer(self, session_id: str, audio_file: UploadFile):
+        """
+        Processes the user's audio answer, transcribes it, and evaluates it.
+        """
+        if self.session_id != session_id:
+            raise ValueError("Session ID mismatch.")
 
-        if "candidates" in gemini_evaluation_reply and gemini_evaluation_reply["candidates"]:
-            evaluation_text = gemini_evaluation_reply["candidates"][0]["content"]["parts"][0]["text"]
-            logging.info(f"Gemini 對回答的評語：\n{evaluation_text}")
-            try:
-                extracted_json_string = extract_json_from_gemini_response(gemini_evaluation_reply)
-                scores = json.loads(extracted_json_string)
-                for dim in evaluation_dimensions:
-                    if dim in scores and isinstance(scores[dim], (int, float)):
-                        evaluation_results[dim].append(scores[dim])
-                logging.info(f"評分結果：{scores}")
-            except (ValueError, json.JSONDecodeError) as e:
-                logging.error(f"Gemini returned invalid JSON for evaluation: {evaluation_text}. Error: {e}")
-        else:
-            logging.warning(f"Gemini did not return evaluation results or candidates were empty. Raw response: {json.dumps(gemini_evaluation_reply, ensure_ascii=False, indent=2)}")
+        logging.info(f"[{self.session_id}] Processing user answer.")
+        user_text = await transcribe_audio(audio_file)
+        logging.info(f"[{self.session_id}] Transcribed text: '{user_text}'")
 
-        session_data["current_question_index"] += 1
-        if session_data["current_question_index"] < len(interview_questions):
-            next_question_obj = interview_questions[session_data["current_question_index"]]
-            gemini_response_text = next_question_obj["question"]
-            session_data["conversation_history"].append({"role": "model", "parts": [{"text": gemini_response_text}]})
-            audio_url = await generate_and_upload_audio(gemini_response_text)
-            await websocket.send_json({"text": gemini_response_text, "audio_url": audio_url})
-            logging.info("Sent AI response and audio URL to frontend.")
+        if not user_text.strip():
+            logging.warning(f"[{self.session_id}] Transcription resulted in empty text.")
+            # Optionally, handle empty transcription (e.g., ask user to repeat)
+            return
+
+        self.conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
+        await self._evaluate_answer(user_text)
+
+    async def get_next_question(self, session_id: str) -> Dict[str, Any]:
+        """
+        Retrieves the next question in the sequence.
+        """
+        if self.session_id != session_id:
+            raise ValueError("Session ID mismatch.")
+
+        self.current_question_index += 1
+        if self.current_question_index < len(self.interview_questions):
+            next_question_text = self.interview_questions[self.current_question_index]["question"]
+            self.conversation_history.append({"role": "model", "parts": [{"text": next_question_text}]})
+            
+            audio_url = await generate_and_upload_audio(next_question_text, self.session_id)
+            
+            logging.info(f"[{self.session_id}] Prepared next question #{self.current_question_index + 1}.")
+            return {"text": next_question_text, "audio_url": audio_url, "interview_ended": False}
         else:
-            final_message = "謝謝您今天來參加面試，面試到此結束。"
-            session_data["conversation_history"].append({"role": "model", "parts": [{"text": final_message}]})
-            audio_url = await generate_and_upload_audio(final_message)
-            await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
-            await asyncio.sleep(1) # Add a delay to ensure frontend receives the final message and audio
-            session_data["interview_completed"] = True
-            logging.info("Interview ended. Sent final message and audio URL to frontend.")
-            await websocket.close() # Backend explicitly closes the WebSocket
+            self.interview_completed = True
+            final_message = "謝謝您今天來參加面試，面試到此結束。我們將在完成所有評估後通知您結果。"
+            self.conversation_history.append({"role": "model", "parts": [{"text": final_message}]})
+            
+            audio_url = await generate_and_upload_audio(final_message, self.session_id)
+
+            logging.info(f"[{self.session_id}] Interview has ended.")
+            return {"text": final_message, "audio_url": audio_url, "interview_ended": True}
 
     def get_interview_report(self, session_id: str) -> Dict[str, Any]:
-        session_data = interview_sessions.get(session_id)
-        if not session_data:
-            logging.error(f"Session ID {session_id} not found for report generation.")
-            return {"error": "Session not found"}
+        """
+        Generates and returns the final interview report.
+        """
+        if self.session_id != session_id or not self.interview_completed:
+             return {"error": "Session not found or interview not completed."}
 
-        evaluation_dimensions = session_data["evaluation_dimensions"]
-        evaluation_results = session_data["evaluation_results"]
-
+        logging.info(f"[{self.session_id}] Generating report.")
         dimension_scores = {}
-        overall_score = 0
         total_scores_count = 0
+        overall_score = 0.0
 
-        for dim in evaluation_dimensions:
-            if evaluation_results[dim]:
-                avg_score = sum(evaluation_results[dim]) / len(evaluation_results[dim])
+        for dim in EVALUATION_DIMENSIONS:
+            scores = self.evaluation_results.get(dim, [])
+            if scores:
+                avg_score = sum(scores) / len(scores)
                 dimension_scores[dim] = avg_score
                 overall_score += avg_score
                 total_scores_count += 1
-                logging.debug(f"Dimension {dim} scores: {evaluation_results[dim]}, Avg: {avg_score:.2f}")
             else:
                 dimension_scores[dim] = 0
-                logging.debug(f"No scores for dimension {dim}.")
 
         if total_scores_count > 0:
             overall_score /= total_scores_count
-        else:
-            overall_score = 0
 
         hired = overall_score >= 3.5
-        logging.info(f"Overall score for session {session_id}: {overall_score:.2f}, Hired: {hired}")
-
-        # Clean up session after report is generated
-        if session_id in interview_sessions:
-            del interview_sessions[session_id]
-            logging.debug(f"Session {session_id} cleaned up after report generation.")
 
         return {
             "overall_score": overall_score,
             "dimension_scores": dimension_scores,
-            "hired": hired
+            "hired": hired,
+            "conversation_history": self.conversation_history
         }
 
-    def update_audio_buffer(self, session_id: str, audio_chunk: bytes):
-        session_data = interview_sessions.get(session_id)
-        if session_data:
-            session_data["audio_buffer"] += audio_chunk
-            session_data["last_audio_time"] = time.time()
+    async def _generate_interview_questions(self, job_title: str, job_description: str) -> List[Dict[str, Any]]:
+        """Generates interview questions using the Gemini API."""
+        prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」，設計5個核心面試問題。請以JSON格式返回，例如：{{"questions": [{{"id": 1, "question": "..."}}]}}."""
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        try:
+            response = await call_gemini_api(GEMINI_API_KEY, payload)
+            json_data = json.loads(extract_json_from_gemini_response(response))
+            questions = json_data.get("questions", [])
+            if not questions: raise ValueError("Empty question list")
+            return questions
+        except Exception as e:
+            logging.error(f"Failed to generate questions, using fallback. Error: {e}")
+            return [
+                {"id": 1, "question": f"您好，請簡單自我介紹，並說明您為何對「{job_title}」這個職位感興趣。"},
+                {"id": 2, "question": "根據您的理解，這個職位最重要的核心能力是什麼？請舉例說明您如何具備這些能力。"},
+                {"id": 3, "question": "請分享一個您過去最成功的專案經驗，您在其中扮演什麼角色？"},
+                {"id": 4, "question": "工作中遇到壓力或挑戰時，您通常如何應對？"},
+                {"id": 5, "question": "對於未來的職涯，您有什麼樣的規劃？"}
+            ]
 
-    def update_video_frame(self, session_id: str, video_frame_base64: str):
-        session_data = interview_sessions.get(session_id)
-        if session_data:
-            session_data["latest_video_frame"] = video_frame_base64
+    async def _evaluate_answer(self, user_text: str):
+        """Evaluates the user's answer using the Gemini API."""
+        question_text = self.interview_questions[self.current_question_index]["question"]
+        prompt = f"""作為一個AI面試官，請根據問題「{question_text}」和候選人回答「{user_text}」，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。請以JSON格式返回，例如：{{"技術深度": 4, "溝通能力": 5}}."""
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        try:
+            response = await call_gemini_api(GEMINI_API_KEY, payload)
+            scores = json.loads(extract_json_from_gemini_response(response))
+            for dim, score in scores.items():
+                if dim in self.evaluation_results and isinstance(score, (int, float)):
+                    self.evaluation_results[dim].append(score)
+            logging.info(f"[{self.session_id}] Evaluated scores: {scores}")
+        except Exception as e:
+            logging.error(f"[{self.session_id}] Failed to evaluate answer. Error: {e}")
 
-    def get_session_data(self, session_id: str):
-        return interview_sessions.get(session_id)
-
-    def remove_session(self, session_id: str):
-        if session_id in interview_sessions:
-            del interview_sessions[session_id]
-            logging.info(f"Session {session_id} removed.")
