@@ -165,6 +165,7 @@ class InterviewManager:
             await asyncio.sleep(1) # Add a delay to ensure frontend receives the final message and audio
             session_data["interview_completed"] = True
             logging.info("Interview ended. Sent final message and audio URL to frontend.")
+            await websocket.close() # Backend explicitly closes the WebSocket
 
     def get_interview_report(self, session_id: str) -> Dict[str, Any]:
         session_data = interview_sessions.get(session_id)
