@@ -6,14 +6,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 import logging
-
+from speech_to_text import load_whisper_model
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
-##
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await load_whisper_model()
 
 # --- Session Management ---
 # Global dictionary to hold interview manager instances, keyed by session_id
@@ -96,10 +96,11 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
 
     try:
         # 1. Process the user's spoken answer
-        await manager.process_user_answer(session_id, audio_file)
+        user_text = await manager.process_user_answer(session_id, audio_file)
         
         # 2. Get the next question from the AI
         next_question_data = await manager.get_next_question(session_id)
+        next_question_data["user_text"] = user_text # Add user_text to the response
         
         logging.info(f"Processed answer and got next question for session {session_id}")
         return JSONResponse(next_question_data)

@@ -69,6 +69,7 @@ class InterviewManager:
 
         self.conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
         await self._evaluate_answer(user_text)
+        return user_text
 
     async def get_next_question(self, session_id: str) -> Dict[str, Any]:
         """

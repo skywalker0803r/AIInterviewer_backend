@@ -17,11 +17,14 @@ async def load_whisper_model():
         whisper_model = whisper.load_model("turbo", device="cpu")
     logging.info("Whisper model loaded.")
 
-async def transcribe_audio(audio_chunk: bytes) -> str:
+from fastapi import UploadFile
+
+async def transcribe_audio(audio_file: UploadFile) -> str:
     transcribed_text = ""
-    logging.info(f"Received candidate audio, size: {len(audio_chunk)} bytes.")
+    audio_content = await audio_file.read()
+    logging.info(f"Received candidate audio, size: {len(audio_content)} bytes.")
     with tempfile.NamedTemporaryFile(delete=True, suffix=".wav") as tmpfile:
-        tmpfile.write(audio_chunk)
+        tmpfile.write(audio_content)
         tmpfile_path = tmpfile.name
         logging.info(f"Audio temporary file path: {tmpfile_path}")
 
