@@ -9,7 +9,7 @@ import logging
 
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
-
+##
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 

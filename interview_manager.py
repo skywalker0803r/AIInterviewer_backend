@@ -42,7 +42,7 @@ class InterviewManager:
         first_question_text = self.interview_questions[0]["question"]
         self.conversation_history.append({"role": "model", "parts": [{"text": first_question_text}]})
         
-        audio_url = await generate_and_upload_audio(first_question_text, self.session_id)
+        audio_url = await generate_and_upload_audio(first_question_text)
         
         logging.info(f"[{self.session_id}] First question is ready.")
         return {
@@ -82,7 +82,7 @@ class InterviewManager:
             next_question_text = self.interview_questions[self.current_question_index]["question"]
             self.conversation_history.append({"role": "model", "parts": [{"text": next_question_text}]})
             
-            audio_url = await generate_and_upload_audio(next_question_text, self.session_id)
+            audio_url = await generate_and_upload_audio(next_question_text)
             
             logging.info(f"[{self.session_id}] Prepared next question #{self.current_question_index + 1}.")
             return {"text": next_question_text, "audio_url": audio_url, "interview_ended": False}
@@ -91,7 +91,7 @@ class InterviewManager:
             final_message = "謝謝您今天來參加面試，面試到此結束。我們將在完成所有評估後通知您結果。"
             self.conversation_history.append({"role": "model", "parts": [{"text": final_message}]})
             
-            audio_url = await generate_and_upload_audio(final_message, self.session_id)
+            audio_url = await generate_and_upload_audio(final_message)
 
             logging.info(f"[{self.session_id}] Interview has ended.")
             return {"text": final_message, "audio_url": audio_url, "interview_ended": True}
