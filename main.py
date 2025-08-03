@@ -131,7 +131,7 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
     if redis_client:
         manager_data = redis_client.get(session_id)
         if manager_data:
-            manager = pickle.loads(manager)
+            manager = pickle.loads(manager_data)
     else:
         manager = interview_sessions.get(session_id)
 
