@@ -188,4 +188,27 @@ class InterviewManager:
             emotion_info = f"\n候選人臉部情緒分析結果：{emotion_result}"
 
         prompt = f"""作為一個AI面試官，請根據問題「{question_text}」、候選人回答「{user_text}」{emotion_info}，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。同時，請提供對候選人回答的詳細分析和理由，並綜合考慮其情緒表現。請以JSON格式返回，例如：{{"scores": {{"技術深度": 4, "溝通能力": 5}}, "reasoning": "候選人在技術深度方面表現良好，因為..."}}."""
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        try:
+            response = await call_gemini_api(GEMINI_API_KEY, payload)
+            json_data = json.loads(extract_json_from_gemini_response(response))
+            scores = json_data.get("scores", {})
+            reasoning = json_data.get("reasoning", "")
+
+            for dim, score in scores.items():
+                if dim in self.evaluation_results:
+                    self.evaluation_results[dim].append(score)
+                else:
+                    logging.warning(f"[{self.session_id}] 收到未知評估維度: {dim}")
+            
+            logging.info(f"[{self.session_id}] Gemini 評估結果 - 分數: {scores}")
+            if reasoning:
+                logging.info(f"[{self.session_id}] Gemini 評估結果 - 分析: {reasoning}")
+                self.conversation_history.append({"role": "model", "parts": [{"text": f"AI 評估: {reasoning}"}]})
+
+        except Exception as e:
+            logging.error(f"[{self.session_id}] 評估答案時呼叫 Gemini API 失敗: {e}", exc_info=True)
+            # Fallback: If evaluation fails, add a neutral score or skip
+            for dim in EVALUATION_DIMENSIONS:
+                self.evaluation_results[dim].append(3) # Neutral score if evaluation fails
 
