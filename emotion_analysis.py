@@ -6,7 +6,8 @@ import os
 
 async def analyze_emotion(video_frame_base64: str) -> str:
     emotion = "neutral"
-    if not video_frame_base64:
+    if not video_frame_base64 or ',' not in video_frame_base64:
+        logging.warning("No valid video frame data or missing comma in base64 string. Skipping emotion analysis.")
         return emotion
 
     import tensorflow as tf
