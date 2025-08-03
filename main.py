@@ -18,12 +18,29 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+# --- CORS Configuration ---
+# Allow frontend to connect
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://aiinterviewer-frontend.onrender.com", "http://localhost", "http://127.0.0.1"], # Add localhost for local dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Global dictionary to hold interview manager instances, keyed by session_id (fallback if Redis is not used)
 interview_sessions: Dict[str, InterviewManager] = {}
 
 # Redis client
 redis_client = None
 
+# --- Static Files ---
+# Mount static files (e.g., generated audio files)
+static_dir = "static"
+os.makedirs(static_dir, exist_ok=True)
+app.mount(f"/{static_dir}", StaticFiles(directory=static_dir), name="static")
+
+# --- API Endpoints ---
 @app.on_event("startup")
 async def startup_event():
     global redis_client
@@ -44,25 +61,6 @@ async def shutdown_event():
     if redis_client:
         redis_client.close()
         logging.info("Disconnected from Redis.")
-
-# --- CORS Configuration ---
-# Allow frontend to connect
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://aiinterviewer-frontend.onrender.com", "http://localhost", "http://127.0.0.1"], # Add localhost for local dev
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# --- Static Files ---
-# Mount static files (e.g., generated audio files)
-static_dir = "static"
-os.makedirs(static_dir, exist_ok=True)
-app.mount(f"/{static_dir}", StaticFiles(directory=static_dir), name="static")
-
-
-# --- API Endpoints ---
 
 @app.get("/jobs")
 async def get_jobs(keyword: str = "前端工程師"):
