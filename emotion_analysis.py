@@ -7,8 +7,8 @@ import os
 async def analyze_emotion(video_frame_base64: str) -> str:
     emotion = "neutral"
     logging.info(f"進入 analyze_emotion 函式。接收到圖像數據長度: {len(video_frame_base64)}。")
-    if not video_frame_base64 or ',' not in video_frame_base64:
-        logging.warning("無效的視訊幀數據或 Base64 字串中缺少逗號。跳過情緒分析。")
+    if not video_frame_base64:
+        logging.warning("接收到空的視訊幀數據。跳過情緒分析。")
         return emotion
 
     import tensorflow as tf
@@ -16,7 +16,7 @@ async def analyze_emotion(video_frame_base64: str) -> str:
 
     img_tmpfile = None
     try:
-        header, encoded = video_frame_base64.split(",", 1)
+        encoded = video_frame_base64
         image_bytes = base64.b64decode(encoded)
         logging.info(f"已解碼 Base64 圖像數據，大小: {len(image_bytes)} 字節。")
 
