@@ -6,18 +6,43 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 import logging
+import redis
+import pickle
 from speech_to_text import load_whisper_model
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 app = FastAPI()
+
+# Global dictionary to hold interview manager instances, keyed by session_id (fallback if Redis is not used)
+interview_sessions: Dict[str, InterviewManager] = {}
+
+# Redis client
+redis_client = None
 
 @app.on_event("startup")
 async def startup_event():
+    global redis_client
     await load_whisper_model()
+    redis_url = os.environ.get("REDIS")
+    if not redis_url:
+        logging.error("REDIS environment variable not set. Redis will not be used.")
+    else:
+        try:
+            redis_client = redis.from_url(redis_url)
+            redis_client.ping()
+            logging.info("Connected to Redis.")
+        except redis.exceptions.ConnectionError as e:
+            logging.error(f"Could not connect to Redis: {e}")
 
-# --- Session Management ---
-# Global dictionary to hold interview manager instances, keyed by session_id
-interview_sessions: Dict[str, InterviewManager] = {}
+@app.on_event("shutdown")
+async def shutdown_event():
+    if redis_client:
+        redis_client.close()
+        logging.info("Disconnected from Redis.")
 
 # --- CORS Configuration ---
 # Allow frontend to connect
@@ -56,7 +81,7 @@ async def start_interview(request: Request):
     Starts a new interview session.
     Creates a unique session_id and an InterviewManager instance.
     """
-    global interview_sessions
+    global redis_client
     session_id = str(uuid.uuid4())
     
     try:
@@ -65,11 +90,23 @@ async def start_interview(request: Request):
         job_description = body.get("job_description", "")
 
         manager = InterviewManager()
-        interview_sessions[session_id] = manager
+        
+        # Store manager in Redis
+        if redis_client:
+            redis_client.set(session_id, pickle.dumps(manager))
+            logging.info(f"Stored session {session_id} in Redis.")
+        else:
+            # Fallback to in-memory if Redis is not available
+            interview_sessions[session_id] = manager
+            logging.warning(f"Redis not available, storing session {session_id} in memory.")
         
         # Start the preparation in the background (non-blocking)
         initial_response = await manager.start_new_interview(job_title, job_description, session_id)
         
+        # Update manager in Redis after initial response
+        if redis_client:
+            redis_client.set(session_id, pickle.dumps(manager))
+
         logging.info(f"Started interview session {session_id} for job '{job_title}'")
         return JSONResponse({
             "message": "Interview session created. Ready to get the first question.",
@@ -79,18 +116,24 @@ async def start_interview(request: Request):
 
     except Exception as e:
         logging.error(f"Error starting interview: {e}", exc_info=True)
-        if session_id in interview_sessions:
+        if redis_client and redis_client.exists(session_id):
+            redis_client.delete(session_id) # Clean up on failure
+        elif session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up on failure
         raise HTTPException(status_code=500, detail=f"Failed to start interview: {str(e)}")
 
 
 @app.post("/submit_answer_and_get_next_question")
-async def submit_answer_and_get_next_question(session_id: str = Form(...), audio_file: UploadFile = File(...)):
-    """
-    Receives user's audio answer, processes it, and returns the next question.
-    This is a single, robust endpoint to handle the main interview loop.
-    """
-    manager = interview_sessions.get(session_id)
+async def submit_answer_and_get_next_question(session_id: str = Form(...), audio_file: UploadFile = File(...), image_data: str = Form(...)):
+    logging.info(f"Received request for /submit_answer_and_get_next_question for session {session_id}")
+    manager = None
+    if redis_client:
+        manager_data = redis_client.get(session_id)
+        if manager_data:
+            manager = pickle.loads(manager_data)
+    else:
+        manager = interview_sessions.get(session_id)
+
     if not manager:
         raise HTTPException(status_code=404, detail="Interview session not found.")
 
@@ -102,6 +145,10 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
         next_question_data = await manager.get_next_question(session_id)
         next_question_data["user_text"] = user_text # Add user_text to the response
         
+        # Update manager in Redis
+        if redis_client:
+            redis_client.set(session_id, pickle.dumps(manager))
+
         logging.info(f"Processed answer and got next question for session {session_id}")
         return JSONResponse(next_question_data)
 
@@ -116,7 +163,14 @@ async def get_interview_report(session_id: str):
     Retrieves the final interview report for a given session.
     """
     logging.info(f"Requesting report for session {session_id}")
-    manager = interview_sessions.get(session_id)
+    manager = None
+    if redis_client:
+        manager_data = redis_client.get(session_id)
+        if manager_data:
+            manager = pickle.loads(manager_data)
+    else:
+        manager = interview_sessions.get(session_id)
+
     if not manager:
         raise HTTPException(status_code=404, detail="Interview session not found.")
         
@@ -138,9 +192,13 @@ async def end_interview(request: Request):
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required.")
             
-        if session_id in interview_sessions:
+        if redis_client and redis_client.exists(session_id):
+            redis_client.delete(session_id)
+            logging.info(f"Successfully ended and cleaned up session {session_id} from Redis.")
+            return JSONResponse({"message": f"Interview session {session_id} has been terminated."})
+        elif session_id in interview_sessions:
             del interview_sessions[session_id]
-            logging.info(f"Successfully ended and cleaned up session {session_id}")
+            logging.info(f"Successfully ended and cleaned up session {session_id} from memory.")
             return JSONResponse({"message": f"Interview session {session_id} has been terminated."})
         else:
             raise HTTPException(status_code=404, detail="Interview session not found.")

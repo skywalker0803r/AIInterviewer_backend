@@ -2,12 +2,13 @@ import logging
 import json
 from typing import Dict, Any, List
 from fastapi import UploadFile
+import base64
 
 from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS
 from gemini_api import call_gemini_api, extract_json_from_gemini_response
 from speech_to_text import transcribe_audio
 from text_to_speech import generate_and_upload_audio
-# from emotion_analysis import analyze_emotion # Temporarily disable for simplification
+from emotion_analysis import analyze_emotion
 
 class InterviewManager:
     """
@@ -51,7 +52,7 @@ class InterviewManager:
             "total_questions": len(self.interview_questions)
         }
 
-    async def process_user_answer(self, session_id: str, audio_file: UploadFile):
+    async def process_user_answer(self, session_id: str, audio_file: UploadFile, image_data: str):
         """
         Processes the user's audio answer, transcribes it, and evaluates it.
         """
@@ -62,13 +63,25 @@ class InterviewManager:
         user_text = await transcribe_audio(audio_file)
         logging.info(f"[{self.session_id}] Transcribed text: '{user_text}'")
 
+        # Decode image data and analyze emotion
+        emotion_result = None
+        if image_data:
+            try:
+                # Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+                header, encoded = image_data.split(",", 1)
+                image_bytes = base64.b64decode(encoded)
+                emotion_result = analyze_emotion(image_bytes)
+                logging.info(f"[{self.session_id}] Emotion analysis result: {emotion_result}")
+            except Exception as e:
+                logging.error(f"[{self.session_id}] Error analyzing emotion: {e}")
+
         if not user_text.strip():
             logging.warning(f"[{self.session_id}] Transcription resulted in empty text.")
             # Optionally, handle empty transcription (e.g., ask user to repeat)
             return
 
         self.conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
-        await self._evaluate_answer(user_text)
+        await self._evaluate_answer(user_text, emotion_result)
         return user_text
 
     async def get_next_question(self, session_id: str) -> Dict[str, Any]:
@@ -133,7 +146,7 @@ class InterviewManager:
 
     async def _generate_interview_questions(self, job_title: str, job_description: str) -> List[Dict[str, Any]]:
         """Generates interview questions using the Gemini API."""
-        prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」，設計5個核心面試問題。請以JSON格式返回，例如：{{"questions": [{{"id": 1, "question": "..."}}]}}."""
+        prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」，設計2個核心面試問題。請以JSON格式返回，例如：{{"questions": [{{"id": 1, "question": "..."}}]}}."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
             response = await call_gemini_api(GEMINI_API_KEY, payload)
@@ -151,18 +164,32 @@ class InterviewManager:
                 {"id": 5, "question": "對於未來的職涯，您有什麼樣的規劃？"}
             ]
 
-    async def _evaluate_answer(self, user_text: str):
+    async def _evaluate_answer(self, user_text: str, emotion_result: Dict[str, Any] = None):
         """Evaluates the user's answer using the Gemini API."""
         question_text = self.interview_questions[self.current_question_index]["question"]
-        prompt = f"""作為一個AI面試官，請根據問題「{question_text}」和候選人回答「{user_text}」，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。請以JSON格式返回，例如：{{"技術深度": 4, "溝通能力": 5}}."""
+        
+        emotion_info = ""
+        if emotion_result:
+            emotion_info = f"\n候選人臉部情緒分析結果：{emotion_result}"
+
+        prompt = f"""作為一個AI面試官，請根據問題「{question_text}」、候選人回答「{user_text}」{emotion_info}，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。同時，請提供對候選人回答的詳細分析和理由，並綜合考慮其情緒表現。請以JSON格式返回，例如：{{"scores": {{"技術深度": 4, "溝通能力": 5}}, "reasoning": "候選人在技術深度方面表現良好，因為..."}}."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
             response = await call_gemini_api(GEMINI_API_KEY, payload)
-            scores = json.loads(extract_json_from_gemini_response(response))
+            evaluation_data = json.loads(extract_json_from_gemini_response(response))
+            scores = evaluation_data.get("scores", {})
+            reasoning = evaluation_data.get("reasoning", "")
+
             for dim, score in scores.items():
                 if dim in self.evaluation_results and isinstance(score, (int, float)):
                     self.evaluation_results[dim].append(score)
             logging.info(f"[{self.session_id}] Evaluated scores: {scores}")
+            logging.info(f"[{self.session_id}] Evaluation reasoning: {reasoning}")
+            
+            # Add reasoning to conversation history as AI's thought process
+            self.conversation_history.append({"role": "model", "parts": [{"text": f"面試官評語：{reasoning}"}]})
+            if emotion_result:
+                self.conversation_history.append({"role": "model", "parts": [{"text": f"情緒分析：{emotion_result}"}]})
         except Exception as e:
             logging.error(f"[{self.session_id}] Failed to evaluate answer. Error: {e}")
 

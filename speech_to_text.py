@@ -20,6 +20,7 @@ async def load_whisper_model():
 from fastapi import UploadFile
 
 async def transcribe_audio(audio_file: UploadFile) -> str:
+    logging.info("進入 transcribe_audio 函式...")
     transcribed_text = ""
     audio_content = await audio_file.read()
     logging.info(f"Received candidate audio, size: {len(audio_content)} bytes.")
@@ -29,12 +30,12 @@ async def transcribe_audio(audio_file: UploadFile) -> str:
         logging.info(f"Audio temporary file path: {tmpfile_path}")
 
         try:
-            logging.info("Starting transcription...")
+            logging.info("處理語音轉錄中...")
             start_time = time.time()
             result = whisper_model.transcribe(tmpfile_path, language="zh")
             end_time = time.time()
             transcribed_text = result["text"]
-            logging.info(f"Transcription successful. Time taken: {end_time - start_time:.2f} seconds. Whisper result: {transcribed_text}")
+            logging.info(f"語音轉錄成功。耗時: {end_time - start_time:.2f} 秒。轉錄內容: {transcribed_text}")
         except Exception as e:
             logging.error(f"Whisper speech-to-text failed: {e}. Full error: {e}")
     return transcribed_text
