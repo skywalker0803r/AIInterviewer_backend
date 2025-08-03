@@ -16,4 +16,7 @@ transformers
 huggingface_hub
 redis
 langchain
+langchain-google-genai
+sentence-transformers
 faiss-cpu
+langchain_google_genai

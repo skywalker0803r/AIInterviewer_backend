@@ -10,6 +10,14 @@ from speech_to_text import transcribe_audio
 from text_to_speech import generate_and_upload_audio
 from emotion_analysis import analyze_emotion
 
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain.memory import ChatMessageHistory, ConversationBufferMemory
+from langchain.chains import ConversationChain
+from langchain.prompts import PromptTemplate
+from langchain.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+
 class InterviewManager:
     """
     Manages the state and logic for a single interview session.
@@ -21,10 +29,16 @@ class InterviewManager:
         self.job_title: str = ""
         self.session_id: str = ""
         self.conversation_history: List[Dict[str, Any]] = []
-        self.interview_questions: List[Dict[str, Any]] = []
-        self.current_question_index: int = 0
         self.evaluation_results: Dict[str, List[float]] = {dim: [] for dim in EVALUATION_DIMENSIONS}
         self.interview_completed: bool = False
+
+        # LangChain components
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY, temperature=0.7)
+        self.memory = ConversationBufferMemory(memory_key="history", return_messages=True)
+        self.conversation = ConversationChain(llm=self.llm, memory=self.memory, verbose=False)
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GEMINI_API_KEY)
+        self.vectorstore = None # Will be initialized with job description
+        self.retriever = None
 
     async def start_new_interview(self, job_title: str, job_description: str, session_id: str) -> Dict[str, Any]:
         self.job_title = job_title
@@ -32,15 +46,25 @@ class InterviewManager:
         logging.info(f"[{self.session_id}] 開始為職位 '{self.job_title}' 生成面試問題。")
         start_time = time.time()
 
-        self.interview_questions = await self._generate_interview_questions(job_title, job_description)
-        
-        if not self.interview_questions:
-            logging.error(f"[{self.session_id}] 無法生成或檢索備用面試問題。")
-            raise ValueError("無法生成或檢索備用面試問題。")
+        # Initialize vector store with job description for RAG
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        texts = text_splitter.split_text(job_description)
+        self.vectorstore = await FAISS.from_texts(texts, self.embeddings)
+        self.retriever = self.vectorstore.as_retriever()
+        logging.info(f"[{self.session_id}] 職位描述已載入到向量儲存中。")
 
-        first_question_text = self.interview_questions[0]["question"]
+        # Dynamically generate the first question
+        first_question_text = await self._generate_dynamic_question(job_title, job_description, is_first_question=True)
+        
+        if not first_question_text:
+            logging.error(f"[{self.session_id}] 無法生成第一個面試問題。")
+            raise ValueError("無法生成第一個面試問題。")
+
         self.conversation_history.append({"role": "model", "parts": [{"text": first_question_text}]})
         
+        # Add first question to LangChain memory
+        self.memory.chat_memory.add_ai_message(first_question_text)
+
         audio_url = await generate_and_upload_audio(first_question_text)
         
         end_time = time.time()
@@ -48,7 +72,7 @@ class InterviewManager:
         return {
             "text": first_question_text,
             "audio_url": audio_url,
-            "total_questions": len(self.interview_questions)
+            # Removed total_questions as it's now dynamic
         }
 
     async def process_user_answer(self, session_id: str, audio_file: UploadFile, image_data: str):
@@ -79,6 +103,8 @@ class InterviewManager:
             # return
 
         self.conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
+        # Add user's answer to LangChain memory
+        self.memory.chat_memory.add_user_message(user_text)
         
         start_time_evaluate = time.time()
         await self._evaluate_answer(user_text, emotion_result)
@@ -94,29 +120,65 @@ class InterviewManager:
             logging.error(f"[{self.session_id}] 會話ID不匹配。預期: {self.session_id}, 收到: {session_id}")
             raise ValueError("會話ID不匹配。")
 
-        logging.info(f"[{self.session_id}] 準備獲取下一個問題。當前問題索引: {self.current_question_index}。")
+        logging.info(f"[{self.session_id}] 準備獲取下一個問題。")
         start_time = time.time()
 
-        self.current_question_index += 1
-        if self.current_question_index < len(self.interview_questions):
-            next_question_text = self.interview_questions[self.current_question_index]["question"]
-            self.conversation_history.append({"role": "model", "parts": [{"text": next_question_text}]})
-            
-            audio_url = await generate_and_upload_audio(next_question_text)
-            
-            end_time = time.time()
-            logging.info(f"[{self.session_id}] 已準備好下一個問題 #{self.current_question_index + 1}，耗時: {end_time - start_time:.2f} 秒。")
-            return {"text": next_question_text, "audio_url": audio_url, "interview_ended": False}
-        else:
+        # Use LangChain ConversationChain to generate the next question
+        # We need to provide a prompt that guides the AI to ask the next question
+        # or indicate interview completion.
+        
+        # Retrieve relevant context from job description for the next question
+        retrieved_docs = []
+        if self.retriever:
+            # Use the last user message as query for retrieval
+            last_user_message = self.memory.chat_memory.messages[-1].content if self.memory.chat_memory.messages else ""
+            retrieved_docs = self.retriever.get_relevant_documents(last_user_message)
+            logging.info(f"[{self.session_id}] RAG 檢索到 {len(retrieved_docs)} 份相關文件用於生成下一個問題。")
+        
+        context = "\n".join([doc.page_content for doc in retrieved_docs])
+
+        # Define a custom prompt template for the conversation chain
+        # This prompt guides the AI to act as an interviewer and decide when to end the interview.
+        template = (
+            "你是一位專業的AI面試官，正在對候選人進行面試。\n"
+            "面試職位是「{}」。\n"
+            "以下是職位描述的相關資訊，請參考這些資訊來提問：\n"
+            "{}\n\n"
+            "你的目標是評估候選人的能力，並在適當的時候結束面試。\n"
+            "如果面試可以結束，請回覆「[面試結束]」作為你的回答，否則請提出下一個面試問題。\n\n"
+            "當前對話歷史：\n"
+            "{history}\n"
+            "候選人: {input}\n"
+            "AI 面試官:"
+        ).format(self.job_title, context)
+        
+        PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
+        self.conversation.prompt = PROMPT
+
+        # The input to the conversation chain will be an empty string, as the history is managed by memory
+        # The actual user input is already added to memory in process_user_answer
+        ai_response = await self.conversation.arun(input="") 
+        
+        if "[面試結束]" in ai_response:
             self.interview_completed = True
-            final_message = "謝謝您今天來參加面試，面試到此結束。我們將在完成所有評估後通知您結果。"
-            self.conversation_history.append({"role": "model", "parts": [{"text": final_message}]})
+            final_message = ai_response.replace("[面試結束]", "").strip()
+            if not final_message: # If AI just returned the tag, provide a default message
+                final_message = "謝謝您今天來參加面試，面試到此結束。我們將在完成所有評估後通知您結果。"
             
+            self.conversation_history.append({"role": "model", "parts": [{"text": final_message}]})
             audio_url = await generate_and_upload_audio(final_message)
 
             end_time = time.time()
             logging.info(f"[{self.session_id}] 面試已結束，耗時: {end_time - start_time:.2f} 秒。")
             return {"text": final_message, "audio_url": audio_url, "interview_ended": True}
+        else:
+            next_question_text = ai_response
+            self.conversation_history.append({"role": "model", "parts": [{"text": next_question_text}]})
+            audio_url = await generate_and_upload_audio(next_question_text)
+            
+            end_time = time.time()
+            logging.info(f"[{self.session_id}] 已準備好下一個問題，耗時: {end_time - start_time:.2f} 秒。")
+            return {"text": next_question_text, "audio_url": audio_url, "interview_ended": False}
 
     def get_interview_report(self, session_id: str) -> Dict[str, Any]:
         if self.session_id != session_id or not self.interview_completed:
@@ -153,41 +215,82 @@ class InterviewManager:
             "conversation_history": self.conversation_history
         }
 
-    async def _generate_interview_questions(self, job_title: str, job_description: str) -> List[Dict[str, Any]]:
-        logging.info(f"[{self.session_id}] 開始生成面試問題，職位: '{job_title}'。")
+    async def _generate_dynamic_question(self, job_title: str, job_description: str, is_first_question: bool = False) -> str:
+        logging.info(f"[{self.session_id}] 開始生成動態面試問題，職位: '{job_title}'。")
         start_time = time.time()
-        prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」，設計2個核心面試問題。請以JSON格式返回，例如：{{"questions": [{{"id": 1, "question": "..."}}]}}."""
+
+        # Use RAG to retrieve relevant info from job description
+        retrieved_docs = []
+        if self.retriever:
+            # For the first question, query with job title, otherwise use last AI message
+            query = job_title if is_first_question else self.memory.chat_memory.messages[-1].content
+            retrieved_docs = self.retriever.get_relevant_documents(query)
+            logging.info(f"[{self.session_id}] RAG 檢索到 {len(retrieved_docs)} 份相關文件。")
+        
+        context = "\n".join([doc.page_content for doc in retrieved_docs])
+
+        if is_first_question:
+            prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」。
+            以下是從職位描述中檢索到的相關資訊，請參考這些資訊來設計第一個面試問題：
+            {context}
+
+            請提出第一個面試問題。"""
+        else:
+            # This part is now handled by get_next_question using ConversationChain
+            # This function will primarily be used for the initial question generation.
+            # If it's called for subsequent questions, it means something went wrong with ConversationChain.
+            prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」。
+            以下是從職位描述中檢索到的相關資訊，請參考這些資訊來設計一個面試問題：
+            {context}
+
+            請提出一個面試問題。"""
+
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
             response = await call_gemini_api(GEMINI_API_KEY, payload)
-            json_data = json.loads(extract_json_from_gemini_response(response))
-            questions = json_data.get("questions", [])
-            if not questions: 
-                logging.warning(f"[{self.session_id}] Gemini API 返回空問題列表。")
-                raise ValueError("空問題列表")
+            question_text = extract_json_from_gemini_response(response) # Assuming Gemini returns plain text for question
+            
             end_time = time.time()
-            logging.info(f"[{self.session_id}] 面試問題生成完成，共 {len(questions)} 個問題，耗時: {end_time - start_time:.2f} 秒。")
-            return questions
+            logging.info(f"[{self.session_id}] 動態面試問題生成完成，耗時: {end_time - start_time:.2f} 秒。")
+            return question_text
         except Exception as e:
-            logging.error(f"[{self.session_id}] 生成問題失敗，使用備用問題。錯誤: {e}", exc_info=True)
-            return [
-                {"id": 1, "question": f"您好，請簡單自我介紹，並說明您為何對「{job_title}」這個職位感興趣。"},
-                {"id": 2, "question": "根據您的理解，這個職位最重要的核心能力是什麼？請舉例說明您如何具備這些能力。"},
-                {"id": 3, "question": "請分享一個您過去最成功的專案經驗，您在其中扮演什麼角色？"},
-                {"id": 4, "question": "工作中遇到壓力或挑戰時，您通常如何應對？"},
-                {"id": 5, "question": "對於未來的職涯，您有什麼樣的規劃？"}
-            ]
+            logging.error(f"[{self.session_id}] 生成動態問題失敗。錯誤: {e}", exc_info=True)
+            # Fallback question
+            return f"您好，請簡單自我介紹，並說明您為何對「{job_title}」這個職位感興趣。"
 
     async def _evaluate_answer(self, user_text: str, emotion_result: Dict[str, Any] = None):
         logging.info(f"[{self.session_id}] 開始評估使用者答案。")
         start_time = time.time()
-        question_text = self.interview_questions[self.current_question_index]["question"]
+        # Get the last AI message (the question) from LangChain memory
+        question_text = ""
+        if self.memory.chat_memory.messages:
+            for msg in reversed(self.memory.chat_memory.messages):
+                if msg.type == "ai":
+                    question_text = msg.content
+                    break
         
+        if not question_text:
+            logging.warning(f"[{self.session_id}] 無法從記憶體中獲取當前問題。")
+            question_text = "未知問題" # Fallback
+
         emotion_info = ""
         if emotion_result:
             emotion_info = f"\n候選人臉部情緒分析結果：{emotion_result}"
 
-        prompt = f"""作為一個AI面試官，請根據問題「{question_text}」、候選人回答「{user_text}」{emotion_info}，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。同時，請提供對候選人回答的詳細分析和理由，並綜合考慮其情緒表現。請以JSON格式返回，例如：{{"scores": {{"技術深度": 4, "溝通能力": 5}}, "reasoning": "候選人在技術深度方面表現良好，因為..."}}."""
+        # Use RAG to retrieve relevant info from job description for evaluation context
+        retrieved_docs = []
+        if self.retriever:
+            retrieved_docs = self.retriever.get_relevant_documents(question_text + " " + user_text)
+            logging.info(f"[{self.session_id}] RAG 檢索到 {len(retrieved_docs)} 份相關文件用於評估。")
+        
+        context = "\n".join([doc.page_content for doc in retrieved_docs])
+
+        prompt = f"""作為一個AI面試官，請根據問題「{question_text}」、候選人回答「{user_text}」{emotion_info}。
+        以下是從職位描述中檢索到的相關資訊，請參考這些資訊來進行評估：
+        {context}
+
+        對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。同時，請提供對候選人回答的詳細分析和理由，並綜合考慮其情緒表現。請以JSON格式返回，例如：{{"scores": {{"技術深度": 4, "溝通能力": 5}}, "reasoning": "候選人在技術深度方面表現良好，因為..."}}."""
+        
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
             response = await call_gemini_api(GEMINI_API_KEY, payload)
