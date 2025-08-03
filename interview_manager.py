@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, List
 from fastapi import UploadFile
 import base64
-
+import time
 from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS
 from gemini_api import call_gemini_api, extract_json_from_gemini_response
 from speech_to_text import transcribe_audio
@@ -27,25 +27,24 @@ class InterviewManager:
         self.interview_completed: bool = False
 
     async def start_new_interview(self, job_title: str, job_description: str, session_id: str) -> Dict[str, Any]:
-        """
-        Initializes the interview by generating questions and preparing the first one.
-        """
         self.job_title = job_title
         self.session_id = session_id
-        logging.info(f"[{self.session_id}] Generating interview questions for '{self.job_title}'.")
+        logging.info(f"[{self.session_id}] 開始為職位 '{self.job_title}' 生成面試問題。")
+        start_time = time.time()
 
         self.interview_questions = await self._generate_interview_questions(job_title, job_description)
         
         if not self.interview_questions:
-            raise ValueError("Failed to generate or retrieve fallback interview questions.")
+            logging.error(f"[{self.session_id}] 無法生成或檢索備用面試問題。")
+            raise ValueError("無法生成或檢索備用面試問題。")
 
-        # Prepare the first question
         first_question_text = self.interview_questions[0]["question"]
         self.conversation_history.append({"role": "model", "parts": [{"text": first_question_text}]})
         
         audio_url = await generate_and_upload_audio(first_question_text)
         
-        logging.info(f"[{self.session_id}] First question is ready.")
+        end_time = time.time()
+        logging.info(f"[{self.session_id}] 第一個問題已準備就緒，耗時: {end_time - start_time:.2f} 秒。")
         return {
             "text": first_question_text,
             "audio_url": audio_url,
@@ -53,43 +52,50 @@ class InterviewManager:
         }
 
     async def process_user_answer(self, session_id: str, audio_file: UploadFile, image_data: str):
-        """
-        Processes the user's audio answer, transcribes it, and evaluates it.
-        """
         if self.session_id != session_id:
-            raise ValueError("Session ID mismatch.")
+            logging.error(f"[{self.session_id}] 會話ID不匹配。預期: {self.session_id}, 收到: {session_id}")
+            raise ValueError("會話ID不匹配。")
 
-        logging.info(f"[{self.session_id}] Processing user answer.")
+        logging.info(f"[{self.session_id}] 開始處理使用者答案。")
+        start_time_process = time.time()
+
         user_text = await transcribe_audio(audio_file)
-        logging.info(f"[{self.session_id}] Transcribed text: '{user_text}'")
+        logging.info(f"[{self.session_id}] 語音轉錄結果: '{user_text}'")
 
-        # Decode image data and analyze emotion
         emotion_result = None
         if image_data:
+            logging.info(f"[{self.session_id}] 檢測到圖像數據，開始情緒分析。")
+            start_time_emotion = time.time()
             try:
-                # Remove data URL prefix (e.g., "data:image/jpeg;base64,")
-                header, encoded = image_data.split(",", 1)
-                image_bytes = base64.b64decode(encoded)
-                emotion_result = analyze_emotion(image_bytes)
-                logging.info(f"[{self.session_id}] Emotion analysis result: {emotion_result}")
+                emotion_result = await analyze_emotion(image_data)
+                end_time_emotion = time.time()
+                logging.info(f"[{self.session_id}] 情緒分析結果: {emotion_result}，耗時: {end_time_emotion - start_time_emotion:.2f} 秒。")
             except Exception as e:
-                logging.error(f"[{self.session_id}] Error analyzing emotion: {e}")
+                logging.error(f"[{self.session_id}] 情緒分析失敗: {e}", exc_info=True)
 
         if not user_text.strip():
-            logging.warning(f"[{self.session_id}] Transcription resulted in empty text.")
+            logging.warning(f"[{self.session_id}] 轉錄內容為空。")
             # Optionally, handle empty transcription (e.g., ask user to repeat)
-            return
+            # return
 
         self.conversation_history.append({"role": "user", "parts": [{"text": user_text}]})
+        
+        start_time_evaluate = time.time()
         await self._evaluate_answer(user_text, emotion_result)
+        end_time_evaluate = time.time()
+        logging.info(f"[{self.session_id}] 答案評估完成，耗時: {end_time_evaluate - start_time_evaluate:.2f} 秒。")
+
+        end_time_process = time.time()
+        logging.info(f"[{self.session_id}] 使用者答案處理總耗時: {end_time_process - start_time_process:.2f} 秒。")
         return user_text
 
     async def get_next_question(self, session_id: str) -> Dict[str, Any]:
-        """
-        Retrieves the next question in the sequence.
-        """
         if self.session_id != session_id:
-            raise ValueError("Session ID mismatch.")
+            logging.error(f"[{self.session_id}] 會話ID不匹配。預期: {self.session_id}, 收到: {session_id}")
+            raise ValueError("會話ID不匹配。")
+
+        logging.info(f"[{self.session_id}] 準備獲取下一個問題。當前問題索引: {self.current_question_index}。")
+        start_time = time.time()
 
         self.current_question_index += 1
         if self.current_question_index < len(self.interview_questions):
@@ -98,7 +104,8 @@ class InterviewManager:
             
             audio_url = await generate_and_upload_audio(next_question_text)
             
-            logging.info(f"[{self.session_id}] Prepared next question #{self.current_question_index + 1}.")
+            end_time = time.time()
+            logging.info(f"[{self.session_id}] 已準備好下一個問題 #{self.current_question_index + 1}，耗時: {end_time - start_time:.2f} 秒。")
             return {"text": next_question_text, "audio_url": audio_url, "interview_ended": False}
         else:
             self.interview_completed = True
@@ -107,17 +114,17 @@ class InterviewManager:
             
             audio_url = await generate_and_upload_audio(final_message)
 
-            logging.info(f"[{self.session_id}] Interview has ended.")
+            end_time = time.time()
+            logging.info(f"[{self.session_id}] 面試已結束，耗時: {end_time - start_time:.2f} 秒。")
             return {"text": final_message, "audio_url": audio_url, "interview_ended": True}
 
     def get_interview_report(self, session_id: str) -> Dict[str, Any]:
-        """
-        Generates and returns the final interview report.
-        """
         if self.session_id != session_id or not self.interview_completed:
-             return {"error": "Session not found or interview not completed."}
+            logging.error(f"[{self.session_id}] 無法生成報告：會話ID不匹配或面試未完成。")
+            return {"error": "會話未找到或面試未完成。"}
 
-        logging.info(f"[{self.session_id}] Generating report.")
+        logging.info(f"[{self.session_id}] 開始生成面試報告。")
+        start_time = time.time()
         dimension_scores = {}
         total_scores_count = 0
         overall_score = 0.0
@@ -137,6 +144,8 @@ class InterviewManager:
 
         hired = overall_score >= 3.5
 
+        end_time = time.time()
+        logging.info(f"[{self.session_id}] 面試報告生成完成，耗時: {end_time - start_time:.2f} 秒。")
         return {
             "overall_score": overall_score,
             "dimension_scores": dimension_scores,
@@ -145,17 +154,22 @@ class InterviewManager:
         }
 
     async def _generate_interview_questions(self, job_title: str, job_description: str) -> List[Dict[str, Any]]:
-        """Generates interview questions using the Gemini API."""
+        logging.info(f"[{self.session_id}] 開始生成面試問題，職位: '{job_title}'。")
+        start_time = time.time()
         prompt = f"""你是一位專業的AI面試官。請根據應徵職位「{job_title}」及職位描述「{job_description}」，設計2個核心面試問題。請以JSON格式返回，例如：{{"questions": [{{"id": 1, "question": "..."}}]}}."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
             response = await call_gemini_api(GEMINI_API_KEY, payload)
             json_data = json.loads(extract_json_from_gemini_response(response))
             questions = json_data.get("questions", [])
-            if not questions: raise ValueError("Empty question list")
+            if not questions: 
+                logging.warning(f"[{self.session_id}] Gemini API 返回空問題列表。")
+                raise ValueError("空問題列表")
+            end_time = time.time()
+            logging.info(f"[{self.session_id}] 面試問題生成完成，共 {len(questions)} 個問題，耗時: {end_time - start_time:.2f} 秒。")
             return questions
         except Exception as e:
-            logging.error(f"Failed to generate questions, using fallback. Error: {e}")
+            logging.error(f"[{self.session_id}] 生成問題失敗，使用備用問題。錯誤: {e}", exc_info=True)
             return [
                 {"id": 1, "question": f"您好，請簡單自我介紹，並說明您為何對「{job_title}」這個職位感興趣。"},
                 {"id": 2, "question": "根據您的理解，這個職位最重要的核心能力是什麼？請舉例說明您如何具備這些能力。"},
@@ -165,7 +179,8 @@ class InterviewManager:
             ]
 
     async def _evaluate_answer(self, user_text: str, emotion_result: Dict[str, Any] = None):
-        """Evaluates the user's answer using the Gemini API."""
+        logging.info(f"[{self.session_id}] 開始評估使用者答案。")
+        start_time = time.time()
         question_text = self.interview_questions[self.current_question_index]["question"]
         
         emotion_info = ""
@@ -173,23 +188,4 @@ class InterviewManager:
             emotion_info = f"\n候選人臉部情緒分析結果：{emotion_result}"
 
         prompt = f"""作為一個AI面試官，請根據問題「{question_text}」、候選人回答「{user_text}」{emotion_info}，對以下維度進行1-5分評分: {', '.join(EVALUATION_DIMENSIONS)}。同時，請提供對候選人回答的詳細分析和理由，並綜合考慮其情緒表現。請以JSON格式返回，例如：{{"scores": {{"技術深度": 4, "溝通能力": 5}}, "reasoning": "候選人在技術深度方面表現良好，因為..."}}."""
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        try:
-            response = await call_gemini_api(GEMINI_API_KEY, payload)
-            evaluation_data = json.loads(extract_json_from_gemini_response(response))
-            scores = evaluation_data.get("scores", {})
-            reasoning = evaluation_data.get("reasoning", "")
-
-            for dim, score in scores.items():
-                if dim in self.evaluation_results and isinstance(score, (int, float)):
-                    self.evaluation_results[dim].append(score)
-            logging.info(f"[{self.session_id}] Evaluated scores: {scores}")
-            logging.info(f"[{self.session_id}] Evaluation reasoning: {reasoning}")
-            
-            # Add reasoning to conversation history as AI's thought process
-            self.conversation_history.append({"role": "model", "parts": [{"text": f"面試官評語：{reasoning}"}]})
-            if emotion_result:
-                self.conversation_history.append({"role": "model", "parts": [{"text": f"情緒分析：{emotion_result}"}]})
-        except Exception as e:
-            logging.error(f"[{self.session_id}] Failed to evaluate answer. Error: {e}")
 

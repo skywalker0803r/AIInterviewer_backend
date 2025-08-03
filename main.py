@@ -11,6 +11,7 @@ import pickle
 from speech_to_text import load_whisper_model
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -65,22 +66,21 @@ app.mount(f"/{static_dir}", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/jobs")
 async def get_jobs(keyword: str = "前端工程師"):
-    """
-    Scrapes job listings from 104.com.tw based on a keyword.
-    """
+    logging.info(f"收到職缺搜尋請求，關鍵字: '{keyword}'")
+    start_time = time.time()
     try:
         jobs = await get_jobs_from_104(keyword)
+        end_time = time.time()
+        logging.info(f"職缺搜尋完成，找到 {len(jobs)} 個職缺，耗時: {end_time - start_time:.2f} 秒。")
         return {"jobs": jobs}
     except Exception as e:
-        logging.error(f"Error getting jobs for keyword '{keyword}': {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve job listings.")
+        logging.error(f"搜尋職缺 '{keyword}' 時發生錯誤: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="無法檢索職缺列表。")
 
 @app.post("/start_interview")
 async def start_interview(request: Request):
-    """
-    Starts a new interview session.
-    Creates a unique session_id and an InterviewManager instance.
-    """
+    logging.info("收到啟動面試請求。")
+    start_time = time.time()
     global redis_client
     session_id = str(uuid.uuid4())
     
@@ -88,17 +88,18 @@ async def start_interview(request: Request):
         body = await request.json()
         job_title = body.get("job", {}).get("title", "未知職缺")
         job_description = body.get("job_description", "")
+        logging.info(f"為新會話 {session_id} 準備面試，職位: '{job_title}'")
 
         manager = InterviewManager()
         
         # Store manager in Redis
         if redis_client:
             redis_client.set(session_id, pickle.dumps(manager))
-            logging.info(f"Stored session {session_id} in Redis.")
+            logging.info(f"會話 {session_id} 已儲存到 Redis。")
         else:
             # Fallback to in-memory if Redis is not available
             interview_sessions[session_id] = manager
-            logging.warning(f"Redis not available, storing session {session_id} in memory.")
+            logging.warning(f"Redis 不可用，會話 {session_id} 儲存到記憶體中。")
         
         # Start the preparation in the background (non-blocking)
         initial_response = await manager.start_new_interview(job_title, job_description, session_id)
@@ -107,35 +108,38 @@ async def start_interview(request: Request):
         if redis_client:
             redis_client.set(session_id, pickle.dumps(manager))
 
-        logging.info(f"Started interview session {session_id} for job '{job_title}'")
+        end_time = time.time()
+        logging.info(f"面試會話 {session_id} 已啟動，耗時: {end_time - start_time:.2f} 秒。")
         return JSONResponse({
-            "message": "Interview session created. Ready to get the first question.",
+            "message": "面試會話已建立。準備好獲取第一個問題。",
             "session_id": session_id,
             "first_question": initial_response
         })
 
     except Exception as e:
-        logging.error(f"Error starting interview: {e}", exc_info=True)
+        logging.error(f"啟動面試時發生錯誤: {e}", exc_info=True)
         if redis_client and redis_client.exists(session_id):
             redis_client.delete(session_id) # Clean up on failure
         elif session_id in interview_sessions:
             del interview_sessions[session_id] # Clean up on failure
-        raise HTTPException(status_code=500, detail=f"Failed to start interview: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"無法啟動面試: {str(e)}")
 
 
 @app.post("/submit_answer_and_get_next_question")
 async def submit_answer_and_get_next_question(session_id: str = Form(...), audio_file: UploadFile = File(...), image_data: str = Form(...)):
-    logging.info(f"Received request for /submit_answer_and_get_next_question for session {session_id}")
+    logging.info(f"收到會話 {session_id} 的答案提交請求。音訊檔案大小: {audio_file.size} 字節，圖像數據存在: {bool(image_data)}。")
+    start_time = time.time()
     manager = None
     if redis_client:
         manager_data = redis_client.get(session_id)
         if manager_data:
-            manager = pickle.loads(manager_data)
+            manager = pickle.loads(manager)
     else:
         manager = interview_sessions.get(session_id)
 
     if not manager:
-        raise HTTPException(status_code=404, detail="Interview session not found.")
+        logging.error(f"會話 {session_id} 未找到。")
+        raise HTTPException(status_code=404, detail="面試會話未找到。")
 
     try:
         # 1. Process the user's spoken answer
@@ -149,20 +153,19 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
         if redis_client:
             redis_client.set(session_id, pickle.dumps(manager))
 
-        logging.info(f"Processed answer and got next question for session {session_id}")
+        end_time = time.time()
+        logging.info(f"會話 {session_id} 的答案處理和下一個問題獲取完成，耗時: {end_time - start_time:.2f} 秒。")
         return JSONResponse(next_question_data)
 
     except Exception as e:
-        logging.error(f"Error during interview loop for session {session_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        logging.error(f"會話 {session_id} 的面試循環中發生錯誤: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"發生錯誤: {str(e)}")
 
 
 @app.get("/get_interview_report")
 async def get_interview_report(session_id: str):
-    """
-    Retrieves the final interview report for a given session.
-    """
-    logging.info(f"Requesting report for session {session_id}")
+    logging.info(f"收到獲取會話 {session_id} 報告的請求。")
+    start_time = time.time()
     manager = None
     if redis_client:
         manager_data = redis_client.get(session_id)
@@ -172,39 +175,46 @@ async def get_interview_report(session_id: str):
         manager = interview_sessions.get(session_id)
 
     if not manager:
-        raise HTTPException(status_code=404, detail="Interview session not found.")
+        logging.error(f"會話 {session_id} 未找到，無法生成報告。")
+        raise HTTPException(status_code=404, detail="面試會話未找到。")
         
     report = manager.get_interview_report(session_id)
     if "error" in report:
+        logging.error(f"會話 {session_id} 報告生成失敗: {report['error']}")
         raise HTTPException(status_code=404, detail=report["error"])
         
+    end_time = time.time()
+    logging.info(f"會話 {session_id} 報告已生成，耗時: {end_time - start_time:.2f} 秒。")
     return JSONResponse(report)
 
 
 @app.post("/end_interview")
 async def end_interview(request: Request):
-    """
-    Explicitly ends an interview session and cleans up resources.
-    """
+    logging.info("收到結束面試請求。")
+    start_time = time.time()
     try:
         body = await request.json()
         session_id = body.get("session_id")
         if not session_id:
-            raise HTTPException(status_code=400, detail="session_id is required.")
+            logging.error("結束面試請求缺少 session_id。")
+            raise HTTPException(status_code=400, detail="session_id 是必需的。")
             
         if redis_client and redis_client.exists(session_id):
             redis_client.delete(session_id)
-            logging.info(f"Successfully ended and cleaned up session {session_id} from Redis.")
-            return JSONResponse({"message": f"Interview session {session_id} has been terminated."})
+            end_time = time.time()
+            logging.info(f"會話 {session_id} 已成功從 Redis 結束並清理，耗時: {end_time - start_time:.2f} 秒。")
+            return JSONResponse({"message": f"面試會話 {session_id} 已終止。"})
         elif session_id in interview_sessions:
             del interview_sessions[session_id]
-            logging.info(f"Successfully ended and cleaned up session {session_id} from memory.")
-            return JSONResponse({"message": f"Interview session {session_id} has been terminated."})
+            end_time = time.time()
+            logging.info(f"會話 {session_id} 已成功從記憶體中結束並清理，耗時: {end_time - start_time:.2f} 秒。")
+            return JSONResponse({"message": f"面試會話 {session_id} 已終止。"})
         else:
-            raise HTTPException(status_code=404, detail="Interview session not found.")
+            logging.error(f"嘗試結束不存在的會話 {session_id}。")
+            raise HTTPException(status_code=404, detail="面試會話未找到。")
             
     except Exception as e:
-        logging.error(f"Error ending interview: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"An error occurred while ending the interview: {str(e)}")
+        logging.error(f"結束面試時發生錯誤: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"結束面試時發生錯誤: {str(e)}")
 
 
