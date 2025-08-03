@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 import time
+import asyncio
 from typing import Dict, Any
 
 from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS, GCS_BUCKET_NAME
@@ -41,7 +42,8 @@ class InterviewManager:
         return {
             "text": first_question,
             "audio_url": audio_url,
-            "session_id": session_id
+            "session_id": session_id,
+            "total_questions": len(interview_questions)
         }
 
     async def _generate_interview_questions(self, job_title: str, job_description: str) -> list:
@@ -160,6 +162,7 @@ class InterviewManager:
             session_data["conversation_history"].append({"role": "model", "parts": [{"text": final_message}]})
             audio_url = await generate_and_upload_audio(final_message)
             await websocket.send_json({"text": final_message, "audio_url": audio_url, "interview_ended": True})
+            await asyncio.sleep(1) # Add a delay to ensure frontend receives the final message and audio
             session_data["interview_completed"] = True
             logging.info("Interview ended. Sent final message and audio URL to frontend.")
 
