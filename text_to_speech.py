@@ -9,7 +9,7 @@ import time
 async def generate_and_upload_audio(text: str) -> str:
     logging.info(f"開始為文本生成音訊: '{text[:50]}...'")
     start_time = time.time()
-    tts = gTTS(text, lang="zh-TW")
+    tts = gTTS(text, lang="zh-tw")
     audio_stream = io.BytesIO()
     tts.write_to_fp(audio_stream)
     audio_stream.seek(0)
