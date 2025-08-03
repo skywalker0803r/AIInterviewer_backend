@@ -9,11 +9,15 @@ WORKDIR /app
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 
 # 安裝 FFmpeg 及其相關工具
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     ffmpeg     libsm6     libxext6     && rm -rf /var/lib/apt/lists/*
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ffmpeg libsm6 libxext6 && rm -rf /var/lib/apt/lists/*
 
 # 將 requirements.txt 複製到工作目錄並安裝 Python 依賴
 COPY requirements.txt .
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
+# 使用清華源並指定 PyTorch 的 CPU 版本安裝
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    -r requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu
 
 # 將整個 backend 目錄複製到容器中
 COPY . .
