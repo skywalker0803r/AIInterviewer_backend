@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 from fastapi import UploadFile
 import base64
 import time
-from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS
+from config import GEMINI_API_KEY, EVALUATION_DIMENSIONS, AVAILABLE_MODELS, DEFAULT_MODEL
 from gemini_api import call_gemini_api, extract_json_from_gemini_response
 from speech_to_text import transcribe_audio
 from text_to_speech import generate_and_upload_audio
@@ -24,16 +24,22 @@ class InterviewManager:
     This class is now stateless regarding session management; session persistence
     is handled by the caller (e.g., in main.py).
     """
-    def __init__(self):
+    def __init__(self, model_name: str = DEFAULT_MODEL):
         # Instance variables are initialized here
         self.job_title: str = ""
         self.session_id: str = ""
         self.conversation_history: List[Dict[str, Any]] = []
         self.evaluation_results: Dict[str, List[float]] = {dim: [] for dim in EVALUATION_DIMENSIONS}
         self.interview_completed: bool = False
+        self._original_job_description: str = ""
+        self.model_name = model_name # Store the selected model name
 
         # LangChain components
-        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY, temperature=0.7)
+        model_config = AVAILABLE_MODELS.get(model_name, AVAILABLE_MODELS[DEFAULT_MODEL])
+        langchain_model_id = model_config["langchain_model_id"]
+        api_key = os.getenv(model_config["api_key_env"])
+
+        self.llm = ChatGoogleGenerativeAI(model=langchain_model_id, google_api_key=api_key, temperature=0.7)
         self.memory = ConversationBufferMemory(memory_key="history", return_messages=True)
         self.conversation = ConversationChain(llm=self.llm, memory=self.memory, verbose=False)
         self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GEMINI_API_KEY)
@@ -48,12 +54,13 @@ class InterviewManager:
             "conversation_history": self.conversation_history,
             "evaluation_results": self.evaluation_results,
             "interview_completed": self.interview_completed,
-            "job_description": self._original_job_description # Store original job_description
+            "job_description": self._original_job_description, # Store original job_description
+            "model_name": self.model_name # Store the selected model name
         }
 
     @classmethod
     async def from_dict(cls, data: Dict[str, Any]):
-        manager = cls() # Create a new instance
+        manager = cls(model_name=data.get("model_name", DEFAULT_MODEL)) # Pass model_name to constructor
         manager.job_title = data.get("job_title", "")
         manager.session_id = data.get("session_id", "")
         manager.conversation_history = data.get("conversation_history", [])
@@ -61,7 +68,7 @@ class InterviewManager:
         manager.interview_completed = data.get("interview_completed", False)
         manager._original_job_description = data.get("job_description", "")
 
-        # Re-initialize LangChain components
+        # Re-initialize LangChain components (llm, embeddings are already done in __init__)
         if manager._original_job_description:
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
             texts = text_splitter.split_text(manager._original_job_description)

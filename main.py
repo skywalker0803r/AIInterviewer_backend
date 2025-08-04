@@ -87,9 +87,10 @@ async def start_interview(request: Request):
         body = await request.json()
         job_title = body.get("job", {}).get("title", "未知職缺")
         job_description = body.get("job_description", "")
-        logging.info(f"為新會話 {session_id} 準備面試，職位: '{job_title}'")
+        model_name = body.get("model_name", DEFAULT_MODEL) # Get model_name from request
+        logging.info(f"為新會話 {session_id} 準備面試，職位: '{job_title}'，模型: {model_name}")
 
-        manager = InterviewManager()
+        manager = InterviewManager(model_name=model_name)
         
         # Start the preparation in the background (non-blocking)
         initial_response = await manager.start_new_interview(job_title, job_description, session_id)
