@@ -167,3 +167,4 @@ GEMINI_API_KEY=你的Gemini API Key
     *   檔案路徑範例：`file:///C:/Users/ricky/Desktop/AIInterviewer/AIInterviewer_frontend/index.html`
 
 現在，您就可以在瀏覽器中體驗 AI 面試官模擬器了。
+可以進行RAG跟上下文管理
