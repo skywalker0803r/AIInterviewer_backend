@@ -9,6 +9,7 @@ from gemini_api import call_gemini_api, extract_json_from_gemini_response
 from speech_to_text import transcribe_audio
 from text_to_speech import generate_and_upload_audio
 from emotion_analysis import analyze_emotion
+import os
 
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.memory import ChatMessageHistory, ConversationBufferMemory

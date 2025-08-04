@@ -13,6 +13,7 @@ from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
 import time
 import json
+from config import DEFAULT_MODEL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

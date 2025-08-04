@@ -23,9 +23,9 @@ AVAILABLE_MODELS = {
         "langchain_model_id": "gemini-2.5-flash",
         "api_key_env": "GEMINI_API_KEY"
     },
-    "gemma-1.1-2b-it": { # Assuming this is the correct model ID for gemma-3-1b-it
-        "display_name": "Gemma 1.1 2B IT (Google)",
-        "langchain_model_id": "gemma-1.1-2b-it",
+    "gemma-3-1b-it": { # Corrected model ID based on user's request
+        "display_name": "Gemma 3.1B IT (Google)", # Updated display name for clarity
+        "langchain_model_id": "gemma-3-1b-it",
         "api_key_env": "GEMINI_API_KEY" # Gemma also uses Gemini API key
     }
     # Add other models here if needed
