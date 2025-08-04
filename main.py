@@ -6,14 +6,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 import logging
-import redis
+import httpx
 import pickle
 from speech_to_text import load_whisper_model
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
 import time
 import json
-from config import DEFAULT_MODEL
+from config import DEFAULT_MODEL,REDIS_API_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,11 +30,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- Redis API Configuration ---
+async def redis_set(key: str, value: str):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key, "value": value})
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logging.error(f"Error setting key '{key}' in Redis API: {e.response.text}")
+            raise HTTPException(status_code=500, detail="Failed to save session state.")
+
+async def redis_get(key: str):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{REDIS_API_URL}/get", params={"key": key})
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return response.json().get("value")
+        except httpx.HTTPStatusError as e:
+            logging.error(f"Error getting key '{key}' from Redis API: {e.response.text}")
+            raise HTTPException(status_code=500, detail="Failed to retrieve session state.")
+
+async def redis_delete(key: str):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(f"{REDIS_API_URL}/delete", params={"key": key})
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logging.error(f"Error deleting key '{key}' from Redis API: {e.response.text}")
+            # Don't necessarily fail the whole request, just log it
+            pass
+
 # Global dictionary to hold interview manager instances, keyed by session_id (fallback if Redis is not used)
 interview_sessions: Dict[str, InterviewManager] = {}
-
-# Redis client
-redis_client = None
 
 # --- Static Files ---
 # Mount static files (e.g., generated audio files)
@@ -45,24 +74,12 @@ app.mount(f"/{static_dir}", StaticFiles(directory=static_dir), name="static")
 # --- API Endpoints ---
 @app.on_event("startup")
 async def startup_event():
-    global redis_client
     await load_whisper_model()
-    redis_url = os.environ.get("REDIS")
-    if not redis_url:
-        logging.error("REDIS environment variable not set. Redis will not be used.")
-    else:
-        try:
-            redis_client = redis.from_url(redis_url)
-            redis_client.ping()
-            logging.info("Connected to Redis.")
-        except redis.exceptions.ConnectionError as e:
-            logging.error(f"Could not connect to Redis: {e}")
+    logging.info("Whisper model loaded.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    if redis_client:
-        redis_client.close()
-        logging.info("Disconnected from Redis.")
+    logging.info("Application shutting down.")
 
 @app.get("/jobs")
 async def get_jobs(keyword: str = "前端工程師"):
@@ -81,7 +98,6 @@ async def get_jobs(keyword: str = "前端工程師"):
 async def start_interview(request: Request):
     logging.info("收到啟動面試請求。")
     start_time = time.time()
-    global redis_client
     session_id = str(uuid.uuid4())
     
     try:
@@ -96,14 +112,9 @@ async def start_interview(request: Request):
         # Start the preparation in the background (non-blocking)
         initial_response = await manager.start_new_interview(job_title, job_description, session_id)
         
-        # Store manager state in Redis as JSON
-        if redis_client:
-            redis_client.set(session_id, json.dumps(manager.to_dict()))
-            logging.info(f"會話 {session_id} 已儲存到 Redis。")
-        else:
-            # Fallback to in-memory if Redis is not available
-            interview_sessions[session_id] = manager
-            logging.warning(f"Redis 不可用，會話 {session_id} 儲存到記憶體中。")
+        # Store manager state in Redis via API
+        await redis_set(session_id, json.dumps(manager.to_dict()))
+        logging.info(f"會話 {session_id} 已儲存到 Redis。")
 
         end_time = time.time()
         logging.info(f"面試會話 {session_id} 已啟動，耗時: {end_time - start_time:.2f} 秒。")
@@ -115,10 +126,7 @@ async def start_interview(request: Request):
 
     except Exception as e:
         logging.error(f"啟動面試時發生錯誤: {e}", exc_info=True)
-        if redis_client and redis_client.exists(session_id):
-            redis_client.delete(session_id) # Clean up on failure
-        elif session_id in interview_sessions:
-            del interview_sessions[session_id] # Clean up on failure
+        await redis_delete(session_id) # Clean up on failure
         raise HTTPException(status_code=500, detail=f"無法啟動面試: {str(e)}")
 
 
@@ -126,18 +134,14 @@ async def start_interview(request: Request):
 async def submit_answer_and_get_next_question(session_id: str = Form(...), audio_file: UploadFile = File(...), image_data: str = Form(...)):
     logging.info(f"收到會話 {session_id} 的答案提交請求。音訊檔案大小: {audio_file.size} 字節，圖像數據存在: {bool(image_data)}。")
     start_time = time.time()
-    manager = None
-    if redis_client:
-        manager_data_json = redis_client.get(session_id)
-        if manager_data_json:
-            manager_data = json.loads(manager_data_json)
-            manager = await InterviewManager.from_dict(manager_data)
-    else:
-        manager = interview_sessions.get(session_id)
-
-    if not manager:
+    
+    manager_data_json = await redis_get(session_id)
+    if not manager_data_json:
         logging.error(f"會話 {session_id} 未找到。")
         raise HTTPException(status_code=404, detail="面試會話未找到。")
+        
+    manager_data = json.loads(manager_data_json)
+    manager = await InterviewManager.from_dict(manager_data)
 
     try:
         # 1. Process the user's spoken answer
@@ -148,8 +152,7 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
         next_question_data["user_text"] = user_text # Add user_text to the response
         
         # Update manager state in Redis
-        if redis_client:
-            redis_client.set(session_id, json.dumps(manager.to_dict()))
+        await redis_set(session_id, json.dumps(manager.to_dict()))
 
         end_time = time.time()
         logging.info(f"會話 {session_id} 的答案處理和下一個問題獲取完成，耗時: {end_time - start_time:.2f} 秒。")
@@ -164,18 +167,14 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
 async def get_interview_report(session_id: str):
     logging.info(f"收到獲取會話 {session_id} 報告的請求。")
     start_time = time.time()
-    manager = None
-    if redis_client:
-        manager_data_json = redis_client.get(session_id)
-        if manager_data_json:
-            manager_data = json.loads(manager_data_json)
-            manager = await InterviewManager.from_dict(manager_data)
-    else:
-        manager = interview_sessions.get(session_id)
-
-    if not manager:
+    
+    manager_data_json = await redis_get(session_id)
+    if not manager_data_json:
         logging.error(f"會話 {session_id} 未找到，無法生成報告。")
         raise HTTPException(status_code=404, detail="面試會話未找到。")
+        
+    manager_data = json.loads(manager_data_json)
+    manager = await InterviewManager.from_dict(manager_data)
         
     report = manager.get_interview_report(session_id)
     if "error" in report:
@@ -198,19 +197,10 @@ async def end_interview(request: Request):
             logging.error("結束面試請求缺少 session_id。")
             raise HTTPException(status_code=400, detail="session_id 是必需的。")
             
-        if redis_client and redis_client.exists(session_id):
-            redis_client.delete(session_id)
-            end_time = time.time()
-            logging.info(f"會話 {session_id} 已成功從 Redis 結束並清理，耗時: {end_time - start_time:.2f} 秒。")
-            return JSONResponse({"message": f"面試會話 {session_id} 已終止。"})
-        elif session_id in interview_sessions:
-            del interview_sessions[session_id]
-            end_time = time.time()
-            logging.info(f"會話 {session_id} 已成功從記憶體中結束並清理，耗時: {end_time - start_time:.2f} 秒。")
-            return JSONResponse({"message": f"面試會話 {session_id} 已終止。"})
-        else:
-            logging.error(f"嘗試結束不存在的會話 {session_id}。")
-            raise HTTPException(status_code=404, detail="面試會話未找到。")
+        await redis_delete(session_id)
+        end_time = time.time()
+        logging.info(f"會話 {session_id} 已成功從 Redis 結束並清理，耗時: {end_time - start_time:.2f} 秒。")
+        return JSONResponse({"message": f"面試會話 {session_id} 已終止。"})
             
     except Exception as e:
         logging.error(f"結束面試時發生錯誤: {e}", exc_info=True)
