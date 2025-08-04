@@ -40,16 +40,56 @@ class InterviewManager:
         self.vectorstore = None # Will be initialized with job description
         self.retriever = None
 
+    def to_dict(self):
+        # Only return serializable attributes
+        return {
+            "job_title": self.job_title,
+            "session_id": self.session_id,
+            "conversation_history": self.conversation_history,
+            "evaluation_results": self.evaluation_results,
+            "interview_completed": self.interview_completed,
+            "job_description": self._original_job_description # Store original job_description
+        }
+
+    @classmethod
+    async def from_dict(cls, data: Dict[str, Any]):
+        manager = cls() # Create a new instance
+        manager.job_title = data.get("job_title", "")
+        manager.session_id = data.get("session_id", "")
+        manager.conversation_history = data.get("conversation_history", [])
+        manager.evaluation_results = data.get("evaluation_results", {dim: [] for dim in EVALUATION_DIMENSIONS})
+        manager.interview_completed = data.get("interview_completed", False)
+        manager._original_job_description = data.get("job_description", "")
+
+        # Re-initialize LangChain components
+        if manager._original_job_description:
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            texts = text_splitter.split_text(manager._original_job_description)
+            manager.vectorstore = FAISS.from_texts(texts, manager.embeddings)
+            manager.retriever = manager.vectorstore.as_retriever()
+            logging.info(f"[{manager.session_id}] 職位描述已從字典重新載入到向量儲存中。")
+
+        # Re-populate LangChain memory from conversation_history
+        manager.memory.clear()
+        for msg in manager.conversation_history:
+            if msg["role"] == "user":
+                manager.memory.chat_memory.add_user_message(msg["parts"][0]["text"])
+            elif msg["role"] == "model":
+                manager.memory.chat_memory.add_ai_message(msg["parts"][0]["text"])
+        
+        return manager
+
     async def start_new_interview(self, job_title: str, job_description: str, session_id: str) -> Dict[str, Any]:
         self.job_title = job_title
         self.session_id = session_id
+        self._original_job_description = job_description # Store original job_description
         logging.info(f"[{self.session_id}] 開始為職位 '{self.job_title}' 生成面試問題。")
         start_time = time.time()
 
         # Initialize vector store with job description for RAG
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         texts = text_splitter.split_text(job_description)
-        self.vectorstore = await FAISS.from_texts(texts, self.embeddings)
+        self.vectorstore = FAISS.from_texts(texts, self.embeddings)
         self.retriever = self.vectorstore.as_retriever()
         logging.info(f"[{self.session_id}] 職位描述已載入到向量儲存中。")
 
@@ -139,18 +179,18 @@ class InterviewManager:
 
         # Define a custom prompt template for the conversation chain
         # This prompt guides the AI to act as an interviewer and decide when to end the interview.
-        template = (
-            "你是一位專業的AI面試官，正在對候選人進行面試。\n"
-            "面試職位是「{}」。\n"
-            "以下是職位描述的相關資訊，請參考這些資訊來提問：\n"
-            "{}\n\n"
-            "你的目標是評估候選人的能力，並在適當的時候結束面試。\n"
-            "如果面試可以結束，請回覆「[面試結束]」作為你的回答，否則請提出下一個面試問題。\n\n"
-            "當前對話歷史：\n"
-            "{history}\n"
-            "候選人: {input}\n"
-            "AI 面試官:"
-        ).format(self.job_title, context)
+        template = f"""你是一位專業的AI面試官，正在對候選人進行面試。
+        面試職位是「{self.job_title}」。
+        以下是職位描述的相關資訊，請參考這些資訊來提問：
+        {context}
+
+        你的目標是評估候選人的能力，並在適當的時候結束面試。
+        如果面試可以結束，請回覆「[面試結束]」作為你的回答，否則請提出下一個面試問題。
+
+        當前對話歷史：
+        {{history}}
+        候選人: {{input}}
+        AI 面試官:"""
         
         PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
         self.conversation.prompt = PROMPT

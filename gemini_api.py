@@ -32,7 +32,9 @@ def extract_json_from_gemini_response(gemini_reply: dict) -> str:
         extracted_json = json_match.group(1)
         # 移除所有無效的控制字元，確保 JSON 能夠被解析
         cleaned_json = re.sub(r'[\x00-\x1F]', '', extracted_json)
+        logging.info(f"從 Gemini 回應中提取並清理後的 JSON 字串: {cleaned_json[:500]}...") # Log first 500 chars
         return cleaned_json
     else:
+        logging.warning(f"Gemini 回應中未找到 JSON 區塊。原始回應文本: {response_text[:500]}...") # Log first 500 chars
         return response_text # Fallback if no markdown block
 

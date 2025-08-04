@@ -1,39 +1,21 @@
-✦ 好的，請將這段話交給我的繼任者：
-
-  ---
-
-  交接說明
-
-  你好，我們剛剛完成了一次重大的架構重構，目的是解決使用者回報的「面試中途連線中斷」問題。
-
-  核心問題：
-  原先的應用程式使用 WebSocket (/ws) 進行前後端通訊，這種長連線在不穩定的網路環境或特定的託管平台（如
-  Render）上容易因超時而中斷。
-
-  已執行的解決方案：
-  我們已將整個通訊架構從 WebSocket 遷移至更穩健的、基於 HTTP 請求/回應的無狀態 (Stateless) 模式。
-
-  主要變更檔案：
-   1. AIInterviewer_backend/main.py:
-       * 移除了 /ws 端點和所有 WebSocket 相關邏輯。
-       * 引入了以 session_id 為鍵的全域字典 interview_sessions 來管理面試狀態，使其能安全地處理多個並行請求。
-       * 建立了新的 HTTP 端點來控制面試流程。
-
-   2. AIInterviewer_backend/interview_manager.py:
-       * 重構了 InterviewManager 類別，使其不再管理全域 session，而是專注於處理單次面試的內部邏輯。
-       * 移除了所有對 WebSocket 的依賴。
-
-   3. AIInterviewer_frontend/script.js:
-       * 完全移除了 WebSocket、心跳 (heartbeat) 機制和相關的複雜狀態管理。
-       * 重構了所有事件處理器，改為呼叫新的後端 HTTP API。
-
-  當前狀態與後續步驟：
-  所有程式碼修改均已完成。
-
-  你的首要任務是指導使用者完成以下步驟：
-   1. 重啟後端伺服器以載入新的程式碼。
-   2. 協助使用者進行完整的端對端測試，驗證新的 HTTP 架構是否正常運作且已解決連線中斷問題。
-   3. 如果在測試中出現任何錯誤，請檢查瀏覽器開發者工具的控制台 (Console)
-      和後端伺服器的日誌，以協助使用者進行偵錯。
-
-  祝順利！
+backend-1  | INFO:root:analyze_emotion 函式執行完成，返回情緒: fear。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 情緒分析結果: fear，耗時: 0.17 秒。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 開始評估使用者答案。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] RAG 檢索到 1 份相關文件用於評估。
+backend-1  | INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBMABo3DwiB7bzOLpwu3aqEVhUeJvgO7Zc "HTTP/1.1 200 OK"
+backend-1  | ERROR:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 評估答案時呼叫 Gemini API 失敗: Expecting value: line 1 column 1 (char 0)
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/app/interview_manager.py", line 337, in _evaluate_answer
+backend-1  |     json_data = json.loads(extract_json_from_gemini_response(response))
+backend-1  |   File "/usr/local/lib/python3.10/json/__init__.py", line 346, in loads
+backend-1  |     return _default_decoder.decode(s)
+backend-1  |   File "/usr/local/lib/python3.10/json/decoder.py", line 337, in decode
+backend-1  |     obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+backend-1  |   File "/usr/local/lib/python3.10/json/decoder.py", line 355, in raw_decode
+backend-1  |     raise JSONDecodeError("Expecting value", s, err.value) from None
+backend-1  | json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 答案評估完成，耗時: 21.47 秒。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 使用者答案處理總耗時: 49.54 秒。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] 準備獲取下一個問題。
+backend-1  | INFO:root:[70b68b34-eb18-4436-a01d-3466f8de33a6] RAG 檢索到 1 份相關文件用於生成下一個問題。
+backend-1  | INFO:root:開始為文本生成音訊: '感謝您進一步說明，開發領域自適應算法來解決非IID資料問題，並將R2準確度從0提升到0.6，這是一個...'

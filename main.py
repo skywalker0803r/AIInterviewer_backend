@@ -12,6 +12,7 @@ from speech_to_text import load_whisper_model
 from interview_manager import InterviewManager
 from job_scraper import get_jobs_from_104
 import time
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -90,21 +91,17 @@ async def start_interview(request: Request):
 
         manager = InterviewManager()
         
-        # Store manager in Redis
+        # Start the preparation in the background (non-blocking)
+        initial_response = await manager.start_new_interview(job_title, job_description, session_id)
+        
+        # Store manager state in Redis as JSON
         if redis_client:
-            redis_client.set(session_id, pickle.dumps(manager))
+            redis_client.set(session_id, json.dumps(manager.to_dict()))
             logging.info(f"會話 {session_id} 已儲存到 Redis。")
         else:
             # Fallback to in-memory if Redis is not available
             interview_sessions[session_id] = manager
             logging.warning(f"Redis 不可用，會話 {session_id} 儲存到記憶體中。")
-        
-        # Start the preparation in the background (non-blocking)
-        initial_response = await manager.start_new_interview(job_title, job_description, session_id)
-        
-        # Update manager in Redis after initial response
-        if redis_client:
-            redis_client.set(session_id, pickle.dumps(manager))
 
         end_time = time.time()
         logging.info(f"面試會話 {session_id} 已啟動，耗時: {end_time - start_time:.2f} 秒。")
@@ -129,9 +126,10 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
     start_time = time.time()
     manager = None
     if redis_client:
-        manager_data = redis_client.get(session_id)
-        if manager_data:
-            manager = pickle.loads(manager_data)
+        manager_data_json = redis_client.get(session_id)
+        if manager_data_json:
+            manager_data = json.loads(manager_data_json)
+            manager = await InterviewManager.from_dict(manager_data)
     else:
         manager = interview_sessions.get(session_id)
 
@@ -147,9 +145,9 @@ async def submit_answer_and_get_next_question(session_id: str = Form(...), audio
         next_question_data = await manager.get_next_question(session_id)
         next_question_data["user_text"] = user_text # Add user_text to the response
         
-        # Update manager in Redis
+        # Update manager state in Redis
         if redis_client:
-            redis_client.set(session_id, pickle.dumps(manager))
+            redis_client.set(session_id, json.dumps(manager.to_dict()))
 
         end_time = time.time()
         logging.info(f"會話 {session_id} 的答案處理和下一個問題獲取完成，耗時: {end_time - start_time:.2f} 秒。")
@@ -166,9 +164,10 @@ async def get_interview_report(session_id: str):
     start_time = time.time()
     manager = None
     if redis_client:
-        manager_data = redis_client.get(session_id)
-        if manager_data:
-            manager = pickle.loads(manager_data)
+        manager_data_json = redis_client.get(session_id)
+        if manager_data_json:
+            manager_data = json.loads(manager_data_json)
+            manager = await InterviewManager.from_dict(manager_data)
     else:
         manager = interview_sessions.get(session_id)
 
