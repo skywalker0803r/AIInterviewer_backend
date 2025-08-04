@@ -206,9 +206,9 @@ class InterviewManager:
         PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
         self.conversation.prompt = PROMPT
 
-        # The input to the conversation chain will be an empty string, as the history is managed by memory
         # The actual user input is already added to memory in process_user_answer
-        ai_response = await self.conversation.arun(input="") 
+        # We pass the last user message as input to ensure the chain processes it.
+        ai_response = await self.conversation.arun(input=last_user_message) 
         
         if "[面試結束]" in ai_response:
             self.interview_completed = True
