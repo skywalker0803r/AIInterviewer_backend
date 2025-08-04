@@ -6,6 +6,7 @@ load_dotenv(override=True)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL")
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+REDIS_API_URL = os.getenv("REDIS_API_URL")
 
 EVALUATION_DIMENSIONS = [
     "技術深度", "領導能力", "溝通能力", "抗壓能力",
@@ -32,3 +33,4 @@ AVAILABLE_MODELS = {
 }
 
 DEFAULT_MODEL = "gemini-2.5-flash"
+
