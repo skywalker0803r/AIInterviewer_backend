@@ -34,7 +34,7 @@ app.add_middleware(
 async def redis_set(key: str, value: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key, "value": value})
+            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key, "value": value}, timeout=30.0)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logging.error(f"Error setting key '{key}' in Redis API: {e.response.text}")
@@ -43,7 +43,7 @@ async def redis_set(key: str, value: str):
 async def redis_get(key: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{REDIS_API_URL}/get", params={"key": key})
+            response = await client.get(f"{REDIS_API_URL}/get", params={"key": key}, timeout=30.0)
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -55,7 +55,7 @@ async def redis_get(key: str):
 async def redis_delete(key: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{REDIS_API_URL}/delete", params={"key": key})
+            response = await client.post(f"{REDIS_API_URL}/delete", params={"key": key}, timeout=30.0)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logging.error(f"Error deleting key '{key}' from Redis API: {e.response.text}")
