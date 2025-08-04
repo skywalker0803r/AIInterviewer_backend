@@ -34,7 +34,8 @@ app.add_middleware(
 async def redis_set(key: str, value: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key, "value": value}, timeout=30.0)
+            # Pass 'value' in the request body as JSON, not as a query parameter.
+            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key}, json={"value": value}, timeout=30.0)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logging.error(f"Error setting key '{key}' in Redis API: {e.response.text}")
