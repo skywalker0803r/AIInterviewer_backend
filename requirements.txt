@@ -20,3 +20,4 @@ sentence-transformers
 faiss-cpu
 langchain-community
 langchain_google_genai
+redis
