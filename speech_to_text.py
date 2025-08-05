@@ -29,9 +29,9 @@ async def transcribe_audio(audio_file: UploadFile) -> str:
         try:
             logging.info("開始語音轉錄...")
             start_time_transcribe = time.time()
-            result = whisper_model.transcribe(tmpfile_path, language="zh")
+            segments, info = whisper_model.transcribe(tmpfile_path, language="zh")
             end_time_transcribe = time.time()
-            transcribed_text = result["text"]
+            transcribed_text = "".join([segment.text for segment in segments])
             logging.info(f"語音轉錄成功。耗時: {end_time_transcribe - start_time_transcribe:.2f} 秒。轉錄內容: '{transcribed_text}'")
         except Exception as e:
             logging.error(f"Whisper 語音轉文字失敗: {e}。完整錯誤: {e}", exc_info=True)
