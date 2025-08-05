@@ -1,4 +1,4 @@
-import whisper
+from faster_whisper import WhisperModel
 import logging
 import tempfile
 import time
@@ -7,12 +7,10 @@ whisper_model = None
 
 async def load_whisper_model():
     global whisper_model
-    logging.info("開始載入 Whisper 模型...")
-    import torch
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    logging.info(f"CUDA 是否可用: {torch.cuda.is_available()}。將使用 {device} 設備載入模型。")
-    whisper_model = whisper.load_model("turbo", device=device)
-    logging.info("Whisper 模型載入完成。")
+    logging.info("開始載入 Fast Whisper 模型...")
+    model_size = "small"
+    whisper_model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    logging.info("Fast Whisper 模型載入完成。")
 
 from fastapi import UploadFile
 
