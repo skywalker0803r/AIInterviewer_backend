@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-# --- CORS Configuration ---
+# --- CORS Configuration ---#
 # Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
@@ -35,7 +35,7 @@ async def redis_set(key: str, value: str):
     async with httpx.AsyncClient() as client:
         try:
             # Pass 'value' in the request body as JSON, not as a query parameter.
-            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key}, json={"value": value}, timeout=30.0)
+            response = await client.post(f"{REDIS_API_URL}/set", params={"key": key}, json={"value": value}, timeout=300.0)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logging.error(f"Error setting key '{key}' in Redis API: {e.response.text}")
@@ -44,7 +44,7 @@ async def redis_set(key: str, value: str):
 async def redis_get(key: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{REDIS_API_URL}/get", params={"key": key}, timeout=30.0)
+            response = await client.get(f"{REDIS_API_URL}/get", params={"key": key}, timeout=300.0)
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -56,7 +56,7 @@ async def redis_get(key: str):
 async def redis_delete(key: str):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{REDIS_API_URL}/delete", params={"key": key}, timeout=30.0)
+            response = await client.post(f"{REDIS_API_URL}/delete", params={"key": key}, timeout=300.0)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logging.error(f"Error deleting key '{key}' from Redis API: {e.response.text}")

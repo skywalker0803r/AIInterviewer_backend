@@ -5,7 +5,7 @@ import json
 async def call_gemini_api(api_key: str, payload: dict) -> dict:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
-    timeout = httpx.Timeout(30.0, read=30.0)
+    timeout = httpx.Timeout(300.0, read=300.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
         try:
             r = await client.post(url, headers=headers, json=payload)
